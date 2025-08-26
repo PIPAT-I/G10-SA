@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Form, Input, Button, message, Row, Col, Typography,  } from 'antd';
+import { Form, Input, Button, message, Row, Col, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { type LoginForm } from "../../../interfaces/Sigin";
 import logo from "../../../assets/loginlogo.png";
+import './login.css';
 
 const { Title, Text } = Typography;
 
@@ -36,50 +37,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      width: '100vw', 
-      overflow: 'hidden',
-      fontFamily: 'kanit'
-    }}>
-      <Row style={{ height: '100%' }}>
+    <div className="login-container">
+      <Row className="login-row">
         {/* Login Form Section */}
         <Col 
           xs={24} 
           md={12} 
-          style={{ 
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'white',
-            padding: '32px',
-            order: 1
-          }}
+          className="login-form-section"
         >
-          <div style={{ width: '100%', maxWidth: '400px' }}>
+          <div className="login-form-wrapper">
             {/* Header */}
-            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+            <div className="login-header">
               <Title 
                 level={1} 
-                style={{ 
-                  color: '#FF8A00', 
-                  fontSize: '48px', 
-                  fontWeight: 900,
-                  margin: 0,
-                  lineHeight: '1.2'
-                }}
+                className="login-title"
               >
                 S-Library
               </Title>
               <Title 
                 level={3} 
-                style={{ 
-                  color: '#011F4B', 
-                  fontWeight: 600,
-                  marginTop: '12px',
-                  marginBottom: 0
-                }}
+                className="login-subtitle"
               >
                 Login into your account
               </Title>
@@ -95,7 +72,7 @@ export default function LoginPage() {
               {/* User ID input field */}
               <Form.Item
                 label={
-                  <Text style={{ color: '#4B5563', fontWeight: 500, fontSize: '16px' }}>
+                  <Text className="login-form-label">
                     ID
                   </Text>
                 }
@@ -103,14 +80,9 @@ export default function LoginPage() {
                 rules={[{ required: true, message: 'Please input your ID!' }]}
               >
                 <Input 
-                  prefix={<UserOutlined style={{ color: '#9CA3AF' }} />}
+                  prefix={<UserOutlined className="login-icon" />}
                   placeholder="ID"
-                  style={{ 
-                    height: '48px', 
-                    fontSize: '16px',
-                    backgroundColor: '#F1F3F6',
-                    borderRadius: '15px'
-                  }}
+                  className="login-input"
                   data-testid="user-id-input"
                 />
               </Form.Item>
@@ -118,7 +90,7 @@ export default function LoginPage() {
               {/* Password input field */}
               <Form.Item
                 label={
-                  <Text style={{ color: '#4B5563', fontWeight: 500, fontSize: '16px' }}>
+                  <Text className="login-form-label">
                     Password
                   </Text>
                 }
@@ -126,42 +98,25 @@ export default function LoginPage() {
                 rules={[{ required: true, message: 'Please input your password!' }]}
               >
                 <Input.Password
-                  prefix={<LockOutlined style={{ color: '#9CA3AF'}} />}
+                  prefix={<LockOutlined className="login-icon" />}
                   placeholder="Enter your password"
-                  style={{ 
-                    height: '48px', 
-                    fontSize: '16px',
-                    backgroundColor: '#F9FAFB',
-                    borderRadius: '15px'
-                  }}
+                  className="login-password-input"
                   data-testid="password-input"
                 />
               </Form.Item>
 
               {/* Submit button */}
-              <Form.Item style={{ marginTop: '24px',textAlign: 'center' }}>
+              <Form.Item className="login-button-wrapper">
                 <Button
                   type="primary"
                   htmlType="submit"
                   loading={loading}
-                  style={{
-                    width: '75%',
-                    height: '48px',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    backgroundColor: '#FFE259',
-                    borderColor: '#FFA751',
-                    borderRadius: '24px',
-                    border: 'none'
-                  }}
+                  className="login-button"
                   data-testid="login-button"
                 >
                   Login now
                 </Button>
               </Form.Item>
-
-             
-            
             </Form>
           </div>
         </Col>
@@ -170,26 +125,14 @@ export default function LoginPage() {
         <Col 
           xs={24} 
           md={12} 
-          style={{ 
-            height: '100%',
-            backgroundColor: '#F0F0F0',
-            padding: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            order: 2
-          }}
+          className="logo-section"
           data-testid="logo-section"
         >
-          <div style={{ width: '100%', maxWidth: '500px' }}>
+          <div className="logo-wrapper">
             <img 
               src={logo}
               alt="Library Logo" 
-              style={{ 
-                width: '100%', 
-                height: 'auto', 
-                objectFit: 'contain' 
-              }}
+              className="logo-image"
             />
           </div>
         </Col>

@@ -205,12 +205,13 @@ func createDefaultUsers() {
 			UserID:           "S010",
 			Password:         string(passwordAdmin),
 			Firstname:        "Admin",
-			Lastname:         "SA-library",
-			Email:            "Slibrary@example.com",
+			Lastname:         "SA-libary",
+			Email:            "email10@example.com",
 			PhoneNumber:      "0801234576",
 			BorrowingLimitID: 1,
 			RoleID:           2,
 		},
+		
 	}
 
 	

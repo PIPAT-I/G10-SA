@@ -1,5 +1,5 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Kanit', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -65,4 +65,49 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Kanit Font Utility Classes */
+.font-kanit {
+  font-family: 'Kanit', sans-serif;
+}
+
+.font-kanit-thin {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 100;
+}
+
+.font-kanit-light {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 300;
+}
+
+.font-kanit-regular {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 400;
+}
+
+.font-kanit-medium {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 500;
+}
+
+.font-kanit-semibold {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 600;
+}
+
+.font-kanit-bold {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+}
+
+.font-kanit-extrabold {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 800;
+}
+
+.font-kanit-black {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 900;
 }
