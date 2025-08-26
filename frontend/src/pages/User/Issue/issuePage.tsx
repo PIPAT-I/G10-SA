@@ -2,19 +2,19 @@ import { Typography } from "antd";
 
 const { Title } = Typography;
 
-const AdminDashboard = () => {
+const IssuePage = () => {
     return (
         <div style={{ padding: "24px" }}>
             <div style={{ marginBottom: "24px" }}>
                 <Title level={2} style={{ color: "#FF8A00", margin: 0 }}>
-                    Admin Dashboard
+                    Issues
                 </Title>
                 <p style={{ color: "#6B7280", margin: "8px 0 0 0" }}>
-                    Welcome to Admin Control Panel
+                    Issue User Page
                 </p>
             </div>
         </div>
     );
 };
 
-export default AdminDashboard;
+export default IssuePage;
