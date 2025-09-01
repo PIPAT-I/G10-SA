@@ -32,9 +32,8 @@ export const AdminReservation = Loadable(
 
 
   // ======================== User Pages ========================
-export const UserDashboard = Loadable(
-  lazy(() => import('../pages/User')));
-
+export const UserLibrary = Loadable(
+lazy(() => import('../pages/User/Library/userLibraryPage')));
 export const UserAnnouncement = Loadable(
   lazy(() => import('../pages/User/Announcement/announcementPage')));
 

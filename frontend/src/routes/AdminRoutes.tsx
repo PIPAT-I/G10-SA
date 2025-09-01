@@ -9,10 +9,30 @@ import {
   AdminReadingActivity,
   AdminReservation
 } from '../components/lazyComponents';
+import { Navigate } from 'react-router-dom';
+import { authen } from '../services/https/authentication/authen-service';
+
+// Protected Admin Route Component
+const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  if (!authen.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  const user = authen.getUser();
+  if (user?.role !== 'admin') {
+    return <Navigate to="/user" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 const AdminRoutes = {
   path: '/admin',
-  element: <FullLayout role="admin" />,
+  element: (
+    <AdminProtectedRoute>
+      <FullLayout />
+    </AdminProtectedRoute>
+  ),
   children: [
     {
       path: '',

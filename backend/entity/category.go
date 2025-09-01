@@ -12,7 +12,7 @@ type Category struct {
 	User   User   `gorm:"foreignKey:UserID;references:UserID" json:"user"`
 
 	// ความสัมพันธ์ 1-1 กับ CategoryStatics
-	CategoryStaticsID uint              `gorm:"not null;uniqueIndex" json:"category_statics_id"`
+	CategoryStaticsID *uint              `gorm:"uniqueIndex" json:"category_statics_id"`
     CategoryStatics   *CategoryStatics  `gorm:"foreignKey:CategoryStaticsID;references:ID" json:"category_statics"`
 }
 
