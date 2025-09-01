@@ -1,33 +1,46 @@
 import { useState } from 'react';
-import { Form, Input, Button, message, Row, Col, Typography,  } from 'antd';
+import { Form, Input, Button, message, Row, Col, Typography, } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { type LoginForm } from "../../../interfaces/Sigin";
+import { useNavigate } from "react-router-dom";
+import { authAPI } from "../../../services/htpps";
+import type {
+  LoginMemberRequest,
+} from "../../../interfaces";
 import logo from "../../../assets/loginlogo.png";
+
 
 const { Title, Text } = Typography;
 
-/**
- * Login page component
- * @returns The login page component
- */
-export default function LoginPage() {
-  // State for login button loading status
-  const [loading, setLoading] = useState<boolean>(false);
+type UserRole = "member" | null;
 
-  /**
-   * Handle form submission
-   * @param {LoginForm} values - The form values
-   */
-  const onFinish = async (values: LoginForm): Promise<void> => {
+
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const [messageApi, contextHolder] = message.useMessage();
+  const [selectedRole, setSelectedRole] = useState<UserRole>(null);
+  const [loading, setLoading] = useState(false);
+
+  const onFinish = async (values: LoginMemberRequest): Promise<void> => {
     setLoading(true);
     try {
-      // TODO: Implement actual API call to backend
-      console.log('Login values:', values);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      message.success('Login form submitted!');
+      const res = await authAPI.memberLogin(values);
+
+      if (res.status === 200) {
+        messageApi.success("Welcome back to S-Liberry!");
+        localStorage.setItem("isLogin", "true");
+        localStorage.setItem("id", res.data.data.user_id);
+        localStorage.setItem(
+          "userid",
+          res.data.data.user_id || values.user_id
+        );
+        localStorage.setItem("token", res.data.data.token);
+        localStorage.setItem("role", "member");
+        setTimeout(() => {
+          location.href = "/";
+        }, 2000);
+      } else {
+        messageApi.error("Login failed. Please try again.");
+      }
     } catch (error) {
       message.error('Form submission failed!');
     } finally {
@@ -36,18 +49,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      width: '100vw', 
+    <div style={{
+      height: '100vh',
+      width: '100vw',
       overflow: 'hidden',
       fontFamily: 'kanit'
     }}>
       <Row style={{ height: '100%' }}>
         {/* Login Form Section */}
-        <Col 
-          xs={24} 
-          md={12} 
-          style={{ 
+        <Col
+          xs={24}
+          md={12}
+          style={{
             height: '100%',
             display: 'flex',
             alignItems: 'center',
@@ -60,11 +73,11 @@ export default function LoginPage() {
           <div style={{ width: '100%', maxWidth: '400px' }}>
             {/* Header */}
             <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-              <Title 
-                level={1} 
-                style={{ 
-                  color: '#FF8A00', 
-                  fontSize: '48px', 
+              <Title
+                level={1}
+                style={{
+                  color: '#FF8A00',
+                  fontSize: '48px',
                   fontWeight: 900,
                   margin: 0,
                   lineHeight: '1.2'
@@ -72,10 +85,10 @@ export default function LoginPage() {
               >
                 S-Library
               </Title>
-              <Title 
-                level={3} 
-                style={{ 
-                  color: '#011F4B', 
+              <Title
+                level={3}
+                style={{
+                  color: '#011F4B',
                   fontWeight: 600,
                   marginTop: '12px',
                   marginBottom: 0
@@ -96,17 +109,17 @@ export default function LoginPage() {
               <Form.Item
                 label={
                   <Text style={{ color: '#4B5563', fontWeight: 500, fontSize: '16px' }}>
-                    ID
+                    USERID
                   </Text>
                 }
                 name="user_id"
                 rules={[{ required: true, message: 'Please input your ID!' }]}
               >
-                <Input 
+                <Input
                   prefix={<UserOutlined style={{ color: '#9CA3AF' }} />}
                   placeholder="ID"
-                  style={{ 
-                    height: '48px', 
+                  style={{
+                    height: '48px',
                     fontSize: '16px',
                     backgroundColor: '#F1F3F6',
                     borderRadius: '15px'
@@ -126,10 +139,10 @@ export default function LoginPage() {
                 rules={[{ required: true, message: 'Please input your password!' }]}
               >
                 <Input.Password
-                  prefix={<LockOutlined style={{ color: '#9CA3AF'}} />}
+                  prefix={<LockOutlined style={{ color: '#9CA3AF' }} />}
                   placeholder="Enter your password"
-                  style={{ 
-                    height: '48px', 
+                  style={{
+                    height: '48px',
                     fontSize: '16px',
                     backgroundColor: '#F9FAFB',
                     borderRadius: '15px'
@@ -139,7 +152,7 @@ export default function LoginPage() {
               </Form.Item>
 
               {/* Submit button */}
-              <Form.Item style={{ marginTop: '24px',textAlign: 'center' }}>
+              <Form.Item style={{ marginTop: '24px', textAlign: 'center' }}>
                 <Button
                   type="primary"
                   htmlType="submit"
@@ -160,17 +173,17 @@ export default function LoginPage() {
                 </Button>
               </Form.Item>
 
-             
-            
+
+
             </Form>
           </div>
         </Col>
 
         {/* Logo Section */}
-        <Col 
-          xs={24} 
-          md={12} 
-          style={{ 
+        <Col
+          xs={24}
+          md={12}
+          style={{
             height: '100%',
             backgroundColor: '#F0F0F0',
             padding: '32px',
@@ -182,13 +195,13 @@ export default function LoginPage() {
           data-testid="logo-section"
         >
           <div style={{ width: '100%', maxWidth: '500px' }}>
-            <img 
+            <img
               src={logo}
-              alt="Library Logo" 
-              style={{ 
-                width: '100%', 
-                height: 'auto', 
-                objectFit: 'contain' 
+              alt="Library Logo"
+              style={{
+                width: '100%',
+                height: 'auto',
+                objectFit: 'contain'
               }}
             />
           </div>

@@ -12,6 +12,10 @@ import (
 
 var db *gorm.DB
 
+func DB() *gorm.DB {
+	return db
+}
+
 // ConnectDatabase เชื่อมต่อฐานข้อมูล
 func ConnectDatabase() {
 	var err error

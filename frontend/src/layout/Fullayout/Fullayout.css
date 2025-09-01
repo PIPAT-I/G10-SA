@@ -1,0 +1,197 @@
+/* FullLayout Styles */
+.full-layout {
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.layout-sider {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #fff; /* พื้นขาว */
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  transition: width 200ms ease, opacity 150ms ease;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.layout-sider.reading-mode {
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+}
+
+.sider-logo {
+  font-weight: bold;
+  padding: 24px 24px 16px;
+  color: #fa8c16; /* ตัวหนังสือส้ม */
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: font-size 200ms ease;
+  cursor: pointer;
+}
+
+.sider-logo.collapsed {
+  font-size: 28px;
+}
+
+.sider-logo.expanded {
+  font-size: 32px;
+}
+
+.sider-menu {
+  padding: 0 12px;
+  margin-top: 20px;
+}
+
+/* Menu hover และ selected effects */
+.sider-menu .ant-menu-item-selected {
+  background-color: #fff2e8 !important; /* พื้นหลังส้มอ่อนเมื่อ selected */
+  color: #fa8c16 !important; /* ตัวอักษรส้ม */
+}
+
+.sider-menu .ant-menu-item {
+  border-radius: 8px;
+  margin: 4px 0;
+  transition: all 0.2s ease;
+}
+
+.sider-menu .ant-menu-item:hover {
+  background-color: #fff7f0 !important; /* hover ส้มอ่อน */
+  color: #fa8c16 !important;
+}
+
+/* Header */
+.layout-header {
+  background: #f9f9f9; /* พื้นขาว header */
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  height: 80px;
+  z-index: 50;
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
+.layout-header.reading-mode {
+  display: none;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-toggle-btn {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Layout Content */
+.layout-content {
+  background: #f0f2f5;
+  min-height: calc(100vh - 80px);
+  padding: 0;
+  position: fixed;
+  top: 80px;
+  right: 0;
+  bottom: 0;
+  transition: left 200ms ease;
+}
+
+.layout-content.sidebar-expanded {
+  left: 260px; /* SIDER_WIDTH + SIDER_MARGIN_LEFT */
+}
+
+.layout-content.sidebar-collapsed {
+  left: 90px; /* SIDER_COLLAPSED_WIDTH + SIDER_MARGIN_LEFT */
+}
+
+.layout-content.sidebar-hidden {
+  left: 0;
+}
+
+.content-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 24px;
+  margin: 16px;
+  height: calc(100vh - 112px);
+  overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .layout-sider {
+    margin: 10px 0 0 10px;
+  }
+  
+  .layout-content.sidebar-expanded,
+  .layout-content.sidebar-collapsed {
+    left: 0;
+  }
+  
+  .content-wrapper {
+    padding: 20px;
+    margin: 12px;
+    height: calc(100vh - 104px);
+  }
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 16px;
+    margin: 8px;
+    border-radius: 8px;
+    height: calc(100vh - 96px);
+  }
+}
+
+/* Dropdown Card for Avatar */
+.ant-dropdown {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ant-dropdown-menu {
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.ant-dropdown-menu-item {
+  padding: 8px 16px;
+}
+
+.ant-btn-primary {
+  background-color: #fa8c16 !important; /* ปุ่มส้ม */
+  border-color: #fa8c16 !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: #ff9c40 !important;
+  border-color: #ff9c40 !important;
+}
