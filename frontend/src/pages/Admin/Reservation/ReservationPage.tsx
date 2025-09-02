@@ -169,7 +169,7 @@ export default function ReservationAdminPage() {
     setDetailModalVisible(true);
   };
 
-  // 📊 โหลดข้อมูลการจอง
+  //  โหลดข้อมูลการจอง
   const loadReservationData = async () => {
     setLoading(true);
     try {
@@ -271,7 +271,7 @@ export default function ReservationAdminPage() {
     }
   };
 
-  // 🔄 โหลดข้อมูลเมื่อเริ่มต้น
+  // โหลดข้อมูลเมื่อเริ่มต้น
   useEffect(() => {
     loadReservationData();
   }, []);
@@ -281,7 +281,7 @@ export default function ReservationAdminPage() {
       {/* Page Header */}
       <div style={{ marginBottom: "24px" }}>
         <Title level={2} style={{ color: "#FF8A00", margin: 0 }}>
-          📅 จัดการการจองหนังสือ
+           จัดการการจองหนังสือ
         </Title>
         <p style={{ color: "#6B7280", margin: "8px 0 0 0" }}>
           ดูและจัดการข้อมูลการจองหนังสือของสมาชิกทั้งหมด

@@ -276,7 +276,7 @@ export default function BorrowingAdminPage() {
 
       {/* Modal รายละเอียด */}
       <Modal
-        title="📋 รายละเอียดการยืม"
+        title="รายละเอียดการยืม"
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={[

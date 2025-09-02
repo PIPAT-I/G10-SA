@@ -264,79 +264,12 @@ func CreateDefaultReservationStatus() {
 }
 
 
-func CreateDefaultCategory() {
-	defaultCategories := []entity.Category{
-		{CategoryName: "Literature", CategoryCode: "LIT", Description: "Fictional books"},
-		{CategoryName: "History", CategoryCode: "HIS", Description: "History books"},
-		{CategoryName: "Social Sciences & Society", CategoryCode: "SOC", Description: "Social science books"},
-		{CategoryName: "Science & Technology", CategoryCode: "TEC", Description: "Science and technology books"},
-		{CategoryName: "Arts & Culture", CategoryCode: "ART", Description: "Art and culture books"},
-	}
-
-	for _, category := range defaultCategories {
-		db.FirstOrCreate(&category, entity.Category{CategoryCode: category.CategoryCode})
-		fmt.Printf("Category '%s' ready\n", category.CategoryName)
-	}
-}
-
-func CreateDefaultAuthor(){
-	defaultAuthors := []entity.Author{
-		{AuthorName: "J.K. Rowling"},
-		{AuthorName: "George R.R. Martin"},
-		{AuthorName: "J.R.R. Tolkien"},
-		{AuthorName: "Agatha Christie"},
-		{AuthorName: "Stephen King"},
-	}
-
-	for _, author := range defaultAuthors {
-		db.FirstOrCreate(&author, entity.Author{AuthorName: author.AuthorName})
-		fmt.Printf("Author '%s' ready\n", author.AuthorName)
-	}
-}
-
-func CreateDefaultPublisher(){
-	defaultPublishers := []entity.Publishers{
-		{PublisherName: "Bloomsbury"},
-		{PublisherName: "Bantam Books"},
-		{PublisherName: "HarperCollins"},
-		{PublisherName: "Penguin Random House"},
-		{PublisherName: "Simon & Schuster"},
-	}
-
-	for _, publisher := range defaultPublishers {
-		db.FirstOrCreate(&publisher, entity.Publishers{PublisherName: publisher.PublisherName})
-		fmt.Printf("Publisher '%s' ready\n", publisher.PublisherName)
-	}
-}
 
 
-func CreateDefaultLanguage(){
-	defaultLanguages := []entity.Languages{
-		{Name: "English"},
-		{Name: "Thai"},
-		{Name: "Japanese"},
-		{Name: "Chinese"},
-		{Name: "Spanish"},
-	}
-
-	for _, language := range defaultLanguages {
-		db.FirstOrCreate(&language, entity.Languages{Name: language.Name})
-		fmt.Printf("Language '%s' ready\n", language.Name)
-	}
-}
 
 
-func CreateDefaultFileType(){
-	defaultFileTypes := []entity.FileTypes{
-		{TypeName: "PDF"},
-		{TypeName: "EPUB"},
-	}
 
-	for _, fileType := range defaultFileTypes {
-		db.FirstOrCreate(&fileType, entity.FileTypes{TypeName: fileType.TypeName})
-		fmt.Printf("File type '%s' ready\n", fileType.TypeName)
-	}
-}
+
 
 
 
