@@ -70,7 +70,7 @@ func SetupDatabase() {
 	createDefaultBorrowingLimits()
 	createDefaultUsers()
 	CreateDefaultBookStatus()
-	CreateDefaultReservationStatus()	
+	CreateDefaultReservationStatus()		
 }
 
 // createDefaultRoles สร้าง roles เริ่มต้น: user และ admin
