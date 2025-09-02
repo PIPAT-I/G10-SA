@@ -1,19 +1,39 @@
-import { Typography } from "antd";
+import { Typography, Card, Empty } from "antd";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export default function AnnouncementUserPage() {
     return (
-        <div>
-            {/* Page Header */}
-            <div style={{ marginBottom: "24px" }}>
-                <Title level={2} style={{ color: "#FF8A00", margin: 0 }}>
-                    Announcements
-                </Title>
-                <p style={{ color: "#6B7280", margin: "8px 0 0 0" }}>
-                    Announcement User Page
-                </p>
+        <Card 
+            className="main-page-card"
+            title={
+                <div>
+                    <Title level={2} style={{ color: "#FF8A00", margin: 0, fontFamily: "Kanit, sans-serif" }}>
+                        Announcements
+                    </Title>
+                    <Text style={{ color: "#6B7280", fontFamily: "Kanit, sans-serif" }}>
+                        Announcement User Page
+                    </Text>
+                </div>
+            }
+            bodyStyle={{ 
+                padding: "32px", 
+                height: "100%", 
+                display: "flex", 
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center"
+            }}
+        >
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Empty 
+                    description={
+                        <Text style={{ fontFamily: "Kanit, sans-serif", color: "#999" }}>
+                            No announcements available
+                        </Text>
+                    }
+                />
             </div>
-        </div>
+        </Card>
     );
 }

@@ -75,10 +75,10 @@ export const adminMenuConfig: MenuConfig[] = [
 
 export const userMenuConfig: MenuConfig[] = [
   {
-    key: "user-dashboard",
+    key: "user-library",
     icon: React.createElement(HomeOutlined),
     label: "Library",
-    path: "/user/dashboard",
+    path: "/user/library",
   },
   {
     key: "user-borrowing",
@@ -91,12 +91,6 @@ export const userMenuConfig: MenuConfig[] = [
     icon: React.createElement(ScheduleOutlined),
     label: "My Reservations",
     path: "/user/reservation",
-  },
-  {
-    key: "user-category",
-    icon: React.createElement(AppstoreOutlined),
-    label: "Categories",
-    path: "/user/category",
   },
   {
     key: "user-announcement",
@@ -127,6 +121,18 @@ export const userMenuConfig: MenuConfig[] = [
     icon: React.createElement(QuestionCircleOutlined),
     label: "Help Center",
     path: "/user/issue",
+  },
+  {
+    key: "user-category",
+    icon: React.createElement(AppstoreOutlined),
+    label: "Categories",
+    path: "/user/category",
+  },
+  {
+    key: "user-test",
+    icon: React.createElement(FileOutlined),
+    label: "Test Page",
+    path: "/user/test",
   },
 ];
 

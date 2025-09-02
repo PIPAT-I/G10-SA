@@ -15,6 +15,5 @@ type Review struct {
 	UserID string `gorm:"not null" json:"user_id"`
 	User   User   `gorm:"foreignKey:UserID;references:UserID" json:"user"`
 
-	BorrowID uint   `gorm:"not null" json:"borrow_id"`
-	Borrow   Borrow `gorm:"foreignKey:BorrowID" json:"borrow"`
+
 }
