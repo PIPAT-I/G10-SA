@@ -1,6 +1,16 @@
 module github.com/PIPAT-I/G10-SA
 
-go 1.24.4
+go 1.23.0
+
+toolchain go1.24.4
+
+require (
+	github.com/gin-gonic/gin v1.10.1
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	golang.org/x/crypto v0.41.0
+	gorm.io/driver/sqlite v1.6.0
+	gorm.io/gorm v1.30.1
+)
 
 require (
 	github.com/gin-gonic/gin v1.10.1
