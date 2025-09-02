@@ -1,19 +1,8 @@
 import { RouterProvider } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
-import router from './routes';
+import MainRoutes from './routes/MainRoutes';
 
 function App() {
-  return (
-    <ConfigProvider
-      theme={{
-        token: {
-          fontFamily: 'Kanit, sans-serif',
-        },
-      }}
-    >
-      <RouterProvider router={router} />
-    </ConfigProvider>
-  );
+  return <RouterProvider router={MainRoutes} />;
 }
 
 export default App;

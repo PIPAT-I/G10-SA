@@ -1,142 +1,129 @@
-import { useState } from 'react';
-import { Form, Input, Button, message, Row, Col, Typography } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { type LoginForm } from "../../../interfaces/Sigin";
+import { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
+import { message } from 'antd';
+import { UserOutlined, LockOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { authen } from "../../../services/https/authentication/authen-service";
 import logo from "../../../assets/loginlogo.png";
+
 import './login.css';
 
-const { Title, Text } = Typography;
-
-/**
- * Login page component
- * @returns The login page component
- */
 export default function LoginPage() {
-  // State for login button loading status
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const nav = useNavigate();
 
-  /**
-   * Handle form submission
-   * @param {LoginForm} values - The form values
-   */
-  const onFinish = async (values: LoginForm): Promise<void> => {
+  // ถ้าเคยล็อกอินอยู่แล้วให้เด้งตาม role
+  useEffect(() => {
+    if (authen.isAuthenticated()) {
+      const role = authen.getRole();
+      nav(role === "admin" ? "/admin" : "/user", { replace: true });
+    }
+  }, [nav]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!identifier.trim() || !password) {
+      message.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return;
+    }
+
     setLoading(true);
     try {
-      // TODO: Implement actual API call to backend
-      console.log('Login values:', values);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      message.success('Login form submitted!');
-    } catch (error) {
-      message.error('Form submission failed!');
+      const res = await authen.login({
+        identifier: identifier.trim(),
+        password: password,
+      });
+      authen.saveSession(res.token, res.user);
+      message.success("เข้าสู่ระบบสำเร็จ!");
+      nav(res.user.role === "admin" ? "/admin" : "/user", { replace: true });
+    } catch (e: any) {
+      console.error('Login error:', e);
+      message.error(e?.response?.data?.error ?? "เข้าสู่ระบบไม่สำเร็จ");
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="login-container">
-      <Row className="login-row">
+      <div className="login-row">
         {/* Login Form Section */}
-        <Col 
-          xs={24} 
-          md={12} 
-          className="login-form-section"
-        >
+        <div className="login-form-section">
           <div className="login-form-wrapper">
             {/* Header */}
             <div className="login-header">
-              <Title 
-                level={1} 
-                className="login-title"
-              >
-                S-Library
-              </Title>
-              <Title 
-                level={3} 
-                className="login-subtitle"
-              >
-                Login into your account
-              </Title>
+              <h1 className="login-title">S-Library</h1>
+              <h3 className="login-subtitle">Login into your account</h3>
             </div>
 
-            <Form
-              name="login"
-              onFinish={onFinish}
-              layout="vertical"
-              requiredMark={false}
-              size="large"
-            >
-              {/* User ID input field */}
-              <Form.Item
-                label={
-                  <Text className="login-form-label">
-                    ID
-                  </Text>
-                }
-                name="user_id"
-                rules={[{ required: true, message: 'Please input your ID!' }]}
-              >
-                <Input 
-                  prefix={<UserOutlined className="login-icon" />}
-                  placeholder="ID"
-                  className="login-input"
-                  data-testid="user-id-input"
-                />
-              </Form.Item>
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="login-form">
+              {/* ID/Email Input */}
+              <div className="form-group">
+                <label className="form-label">ID/Email</label>
+                <div className="input-wrapper">
+                  <UserOutlined className="input-icon" />
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="Email or ID"
+                    className="form-input"
+                    required
+                    data-testid="user-id-input"
+                  />
+                </div>
+              </div>
 
-              {/* Password input field */}
-              <Form.Item
-                label={
-                  <Text className="login-form-label">
-                    Password
-                  </Text>
-                }
-                name="password"
-                rules={[{ required: true, message: 'Please input your password!' }]}
-              >
-                <Input.Password
-                  prefix={<LockOutlined className="login-icon" />}
-                  placeholder="Enter your password"
-                  className="login-password-input"
-                  data-testid="password-input"
-                />
-              </Form.Item>
+              {/* Password Input */}
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <div className="input-wrapper">
+                  <LockOutlined className="input-icon" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="form-input"
+                    required
+                    data-testid="password-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="password-toggle-btn"
+                    data-testid="password-toggle"
+                  >
+                    {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  </button>
+                </div>
+              </div>
 
-              {/* Submit button */}
-              <Form.Item className="login-button-wrapper">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
+              {/* Submit Button */}
+              <div className="form-group">
+                <button
+                  type="submit"
+                  disabled={loading}
                   className="login-button"
                   data-testid="login-button"
                 >
-                  Login now
-                </Button>
-              </Form.Item>
-            </Form>
+                  {loading ? 'Logging in...' : 'Login now'}
+                </button>
+              </div>
+            </form>
           </div>
-        </Col>
+        </div>
 
         {/* Logo Section */}
-        <Col 
-          xs={24} 
-          md={12} 
-          className="logo-section"
-          data-testid="logo-section"
-        >
+        <div className="logo-section" data-testid="logo-section">
           <div className="logo-wrapper">
-            <img 
-              src={logo}
-              alt="Library Logo" 
-              className="logo-image"
-            />
+            <img src={logo} alt="Library Logo" className="logo-image" />
           </div>
-        </Col>
-      </Row>
+        </div>
+      </div>
     </div>
   );
 }

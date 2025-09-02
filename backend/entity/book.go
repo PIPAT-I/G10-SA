@@ -29,7 +29,7 @@ type Book struct {
 	Authors           []Author           `gorm:"many2many:book_author;" json:"authors"`
 	BookLicenses      []BookLicense      `gorm:"foreignKey:BookID" json:"book_licenses"`
 	Reservations      []Reservation      `gorm:"foreignKey:BookID" json:"reservations"`
-	Borrows           []Borrow          `gorm:"foreignKey:BookID" json:"borrows"`
+	
 	ReadingActivities []ReadingActivity `gorm:"foreignKey:BookID" json:"reading_activities"`
 	Reviews           []Review          `gorm:"foreignKey:BookID" json:"reviews"`
 	Booklists         []Booklist        `gorm:"many2many:booklist_books;" json:"booklists"`
