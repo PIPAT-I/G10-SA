@@ -1,19 +1,40 @@
-import { Typography } from "antd";
+import { Typography, Card, Empty } from "antd";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const ReviewPage = () => {
     return (
-        <div style={{ padding: "24px" }}>
-            <div style={{ marginBottom: "24px" }}>
-                <Title level={2} style={{ color: "#FF8A00", margin: 0 }}>
-                    My Reviews
-                </Title>
-                <p style={{ color: "#6B7280", margin: "8px 0 0 0" }}>
-                    Review User Page
-                </p>
+        <Card 
+            className="main-page-card"
+            title={
+                <div>
+                    <Title level={2} style={{ color: "#FF8A00", margin: 0, fontFamily: "Kanit, sans-serif" }}>
+                        My Reviews
+                    </Title>
+                    <Text style={{ color: "#6B7280", fontFamily: "Kanit, sans-serif" }}>
+                        Review User Page
+                    </Text>
+                </div>
+            }
+            bodyStyle={{ 
+                padding: "32px", 
+                height: "100%", 
+                display: "flex", 
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center"
+            }}
+        >
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Empty 
+                    description={
+                        <Text style={{ fontFamily: "Kanit, sans-serif", color: "#999" }}>
+                            No reviews yet
+                        </Text>
+                    }
+                />
             </div>
-        </div>
+        </Card>
     );
 };
 

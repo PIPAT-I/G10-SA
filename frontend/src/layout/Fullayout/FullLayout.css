@@ -1,167 +1,232 @@
-/* FullLayout Styles */
-.full-layout {
-  min-height: 100vh;
+
+.layout,
+.layout * {
+
+  font-family: 'Kanit', system-ui, sans-serif !important;
 }
 
-.layout-sider {
+/* หน้าจอหลัก */
+.layout {
+ 
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* ===== SIDEBAR (แถบด้านซ้าย) ===== */
+.sidebar {
+  width: 250px;
+  background-color: white;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
   position: fixed;
+  height: 100vh;
   left: 0;
   top: 0;
-  bottom: 0;
-  background: #fff;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
-  border-radius: 20px;
-  transition: width 200ms ease, opacity 150ms ease;
-  overflow: hidden;
-  z-index: 100;
+  z-index: 1000;
 }
 
-.layout-sider.reading-mode {
-  opacity: 0;
-  pointer-events: none;
-  width: 0;
-}
-
-.sider-logo {
-  font-weight: bold;
-  padding: 24px 24px 16px;
-  color: #fa8c16;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: font-size 200ms ease;
-  cursor: pointer;
-}
-
-.sider-logo.collapsed {
-  font-size: 28px;
-}
-
-.sider-logo.expanded {
+/* Logo ด้านบน */
+.sidebar-logo  {
   font-size: 32px;
-}
-
-.sider-menu {
-  padding: 0 12px;
-  margin-top: 20px;
-}
-
-/* Menu hover และ selected effects */
-
-.sider-menu .ant-menu-item-selected {
-  background-color: #fff2e8 !important;
-  color: #fa8c16 !important;
-}
-
-
-
-
-.sider-menu .ant-menu-item {
-  border-radius: 8px;
-  margin: 4px 0;
-  transition: all 0.2s ease;
-}
-
-.layout-header {
-  background: #f9f9f9;
-  padding: 0 24px;
+  font-weight: bold;
+  color: #fa8c16;
+  padding: 20px 30px;
+  text-align: center;
+  background-color: white;
+  border: none;
+  outline: none;
+  cursor: default;
+  width: 100%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e0e0e0;
+  justify-content: center;
+}
+
+.sidebar-logo:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.sidebar-logo:active {
+  outline: none;
+  border: none;
+  box-shadow: none;
+  background-color: white;
+}
+
+/* เมนูนำทาง */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 20px;
+  margin-bottom: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  color: #666;
+  font-size: 14px;
+  outline: none;
+}
+
+.nav-item:hover {
+  background-color: #f5f5f5;
+  color: #fa8c16;
+}
+
+.nav-item:focus {
+  outline: none;
+  background-color: #f5f5f5;
+  color: #fa8c16;
+}
+
+.nav-item-active {
+  background-color: #fff2e8;
+  color: #fa8c16;
+  font-weight: 500;
+}
+
+.nav-icon {
+  margin-right: 12px;
+  font-size: 16px;
+}
+
+.nav-label {
+  flex: 1;
+  text-align: left;
+}
+
+/* ===== MAIN CONTENT (เนื้อหาหลัก) ===== */
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* เต็มหน้าจอ */
+  width: calc(100vw - 250px); /* เต็มความกว้าง หัก sidebar */
+}
+
+/* Header (แถบด้านบน) */
+.header {
   height: 80px;
-  z-index: 50;
-  position: fixed;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+  padding: 0 24px;
+  position: sticky;
   top: 0;
-  right: 0;
+  z-index: 100;
+  width: 100%;
+  flex-shrink: 0;
 }
 
-.layout-header.reading-mode {
-  display: none;
-}
 
-.header-left {
+
+.header-right {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.header-toggle-btn {
-  display: inline-flex;
+/* การแจ้งเตือน */
+.notification {
+  position: relative;
+  padding: 8px;
+  cursor: pointer;
+  color: #666;
+  font-size: 18px;
+}
+
+
+
+/* รูปโปรไฟล์ผู้ใช้ */
+.user-avatar {
   width: 36px;
   height: 36px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  cursor: pointer;
-}
-
-.header-right {
+  background-color: #c4c4c4;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
 }
 
-.layout-content {
-  background: #f0f2f5;
-  min-height: calc(100vh - 80px);
+/* User Avatar Dropdown */
+.user-avatar-dropdown {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-avatar-dropdown:hover .user-avatar {
+  background-color: #fa8c16;
+  transform: scale(1.05);
+}
+
+/* ข้อมูลผู้ใช้ */
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.2;
+}
+
+/* ปุ่มออกจากระบบ */
+.logout-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+}
+
+/* เนื้อหาหลัก */
+.content {
+  flex: 1;
   padding: 0;
-  position: fixed;
-  top: 80px;
-  right: 0;
-  bottom: 0;
-  transition: left 200ms ease;
-}
-
-.layout-content.sidebar-expanded {
-  left: 260px; /* SIDER_WIDTH + SIDER_MARGIN_LEFT */
-}
-
-.layout-content.sidebar-collapsed {
-  left: 90px; /* SIDER_COLLAPSED_WIDTH + SIDER_MARGIN_LEFT */
-}
-
-.layout-content.sidebar-hidden {
-  left: 0;
-}
-
-.content-wrapper {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  padding: 24px;
-  margin: 16px;
-  height: calc(100vh - 112px);
+  margin: 0;
+  background-color: #f5f5f5;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  height: calc(100vh - 80px); /* เต็มหน้าจอ หัก header */
+  display: flex;
+  flex-direction: column;
 }
 
-/* Responsive */
-@media (max-width: 992px) {
-  .layout-sider {
-    margin: 10px 0 0 10px;
-  }
-  
-  .layout-content.sidebar-expanded,
-  .layout-content.sidebar-collapsed {
-    left: 0;
-  }
-  
-  .content-wrapper {
-    padding: 20px;
-    margin: 12px;
-    height: calc(100vh - 104px);
-  }
-}
 
-@media (max-width: 768px) {
-  .content-wrapper {
-    padding: 16px;
-    margin: 8px;
-    border-radius: 8px;
-    height: calc(100vh - 96px);
-  }
-}
+
+
+

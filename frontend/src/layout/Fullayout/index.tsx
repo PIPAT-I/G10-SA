@@ -1,182 +1,135 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Layout, Menu, Avatar, Badge, Space } from "antd";
-import type { MenuProps } from "antd";
 import {
   BellOutlined,
   UserOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
+import { Dropdown } from "antd";
+import type { MenuProps } from "antd";
+
 import "./FullLayout.css";
+import { authen } from "../../services/https/authentication/authen-service";
+import { adminMenuConfig, userMenuConfig } from "./menuConfig";
 
-// Import menu configs directly
-import { 
-  adminMenuConfig, 
-  userMenuConfig, 
-  createMenuItems
-} from "./menuConfig";
-
-const { Sider, Header, Content } = Layout;
-
-// ---- Constants ----
-const LAYOUT_CONSTANTS = {
-  SIDER_WIDTH: 250,
-  SIDER_COLLAPSED_WIDTH: 80,
-  SIDER_MARGIN_LEFT: 10,
-  HEADER_HEIGHT: 80,
-  BREAKPOINT: "lg" as const,
-} as const;
-
-// ---- Helpers ----
-const getPageKey = (role: "admin" | "user"): string =>
-  role === "admin" ? "admin-home" : "user-dashboard";
-
-const getStoredPage = (role: "admin" | "user"): string =>
-  localStorage.getItem(`page:${role}`) || getPageKey(role);
-
-const setCurrentPage = (role: "admin" | "user", val: string): void =>
-  localStorage.setItem(`page:${role}`, val);
-
-// ---- Types ----
-interface FullLayoutProps {
-  role: "admin" | "user";
-}
-
-// ---- Main Component ----
-const FullLayout: React.FC<FullLayoutProps> = ({ role }) => {
+const FullLayout: React.FC = () => {
   const navigate = useNavigate();
-
-  // Layout states
-  const [collapsed, setCollapsed] = useState(true);
-  const [broken, setBroken] = useState(false);
-
-  // Page state from localStorage
-  const page = getStoredPage(role);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   
-  const isReader = false; 
-  
+  const currentUser = authen.getUser();
+  const role = currentUser?.role as "admin" | "user" || "user";
 
-  // Calculate visible width
-  const siderVisibleWidth = collapsed
-    ? broken ? 0 : LAYOUT_CONSTANTS.SIDER_COLLAPSED_WIDTH
-    : LAYOUT_CONSTANTS.SIDER_WIDTH;
+  // ตรวจสอบการ login
+  useEffect(() => {
+    if (!authen.isAuthenticated() || !currentUser) {
+      navigate('/login', { replace: true });
+      return;
+    }
+  }, [navigate, currentUser]);
 
-  // Menu configuration
-  const menuConfig = role === "admin" ? adminMenuConfig : userMenuConfig;
+ 
+  const handleLogout = () => {
+    authen.logout();
+    navigate('/login');
+  };
 
-  // Generate menu items using the helper function
-  const menuItems: Required<MenuProps>["items"] = useMemo(
-    () => createMenuItems(menuConfig, navigate, setCurrentPage, role),
-    [menuConfig, navigate, role]
-  );
+  const handleProfile = () => {
+    navigate('/user/profile');
+  };
 
-  // Calculate positions
-  const headerLeft = isReader ? 0 : broken ? 0 : siderVisibleWidth + LAYOUT_CONSTANTS.SIDER_MARGIN_LEFT;
+  // สร้าง dropdown menu items
+  const userMenuItems: MenuProps['items'] = [
+    {
+      key: 'profile',
+      label: 'Profile',
+      icon: <UserOutlined />,
+      onClick: handleProfile,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: 'Logout',
+      icon: <LogoutOutlined />,
+      onClick: handleLogout,
+    },
+  ];
+
+  // เลือก menu ตาม role
+  const menuItems = role === "admin" ? adminMenuConfig : userMenuConfig;
+  const currentPath = window.location.pathname;
+
+  if (!currentUser) {
+    return null;
+  }
 
   return (
-    <Layout className="full-layout">
-      <Sider
-        width={LAYOUT_CONSTANTS.SIDER_WIDTH}
-        collapsed={collapsed}
-        collapsedWidth={broken ? 0 : LAYOUT_CONSTANTS.SIDER_COLLAPSED_WIDTH}
-        breakpoint={LAYOUT_CONSTANTS.BREAKPOINT}
-        onBreakpoint={(isBroken) => {
-          setBroken(isBroken);
-          if (isBroken) setCollapsed(true);
-        }}
-        onMouseEnter={() => !broken && setCollapsed(false)}
-        onMouseLeave={() => !broken && setCollapsed(true)}
-        className={`layout-sider ${isReader ? 'reading-mode' : ''}`}
-        style={{
-          margin: `10px 0 0 ${LAYOUT_CONSTANTS.SIDER_MARGIN_LEFT}px`,
-        }}
-      >
-        {/* Logo / Brand */}
-        <div
-          className={`sider-logo ${collapsed && !broken ? 'collapsed' : 'expanded'}`}
-          onClick={() => {
-            const key = getPageKey(role);
-            setCurrentPage(role, key);
-            navigate(role === "admin" ? "/admin" : "/user/library");
-          }}
-        >
-          {collapsed && !broken ? "S" : "S-Library"}
-        </div>
+    <div className="layout">
+      {/* Sidebar */}
+      <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+       
 
-        <Menu
-          mode="inline"
-          items={menuItems}
-          selectedKeys={[page]}
-          className="sider-menu"
-          inlineCollapsed={collapsed && !broken}
-        />
-      </Sider>
+        {/* Menu */}
+        <nav className="sidebar-nav">
+          <button className="sidebar-logo">S-Library</button>
 
-      <Layout>
-        <Header
-          className={`layout-header ${isReader ? 'reading-mode' : ''}`}
-          style={{
-            left: headerLeft,
-          }}
-        >
-          <div className="header-left">
-            {broken && (
-              <span
-                role="button"
-                aria-label="Toggle menu"
-                onClick={() => setCollapsed((v) => !v)}
-                className="header-toggle-btn"
-              >
-                {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              </span>
-            )}
-          </div>
-
-          <Space size={16} align="center" className="header-right">
-            <Badge
-              dot
-              size="small"
-              offset={[-2, 6]}
-              styles={{ 
-                indicator: { 
-                  backgroundColor: '#ff4d4f',
-                  boxShadow: "0 0 0 2px #f9f9f9" 
-                } 
+          {menuItems.map((item) => (
+            <button
+              key={item.key}
+              className={`nav-item ${currentPath === item.path ? 'nav-item-active' : ''}`}
+              onClick={() => {
+                navigate(item.path);
+                setSidebarOpen(false); // ปิด sidebar บน mobile
               }}
             >
-              <Avatar
-                size={31}
-                style={{ background: "transparent" }}
-                icon={<BellOutlined style={{ fontSize: 23, color: "#888" }} />}
-              />
-            </Badge>
-            <Avatar
-              size={36}
-              style={{ background: "#c4c4c4" }}
-              icon={<UserOutlined style={{ color: "#fff", fontSize: 20 }} />}
-            />
-          </Space>
-        </Header>
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
 
-        <Content
-          className={`layout-content ${
-            isReader 
-              ? 'sidebar-hidden' 
-              : broken 
-                ? 'sidebar-hidden' 
-                : collapsed 
-                  ? 'sidebar-collapsed' 
-                  : 'sidebar-expanded'
-          }`}
-        >
-          <div className="content-wrapper">
-            <Outlet />
+      {/* Main Content */}
+      <div className="main-content">
+        {/* Header */}
+        <header className="header">
+          <div className="header-right">
+            {/* Notification */}
+            <div className="notification">
+              <BellOutlined />
+            </div>
+
+            {/* User Info */}
+            <div className="user-info">
+              <span className="user-name">
+                {currentUser.firstname} {currentUser.lastname}
+              </span>
+              <span className="user-role">({role})</span>
+            </div>
+
+            {/* User Avatar with Dropdown */}
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <div className="user-avatar-dropdown">
+                <div className="user-avatar">
+                  <UserOutlined />
+                </div>
+              </div>
+            </Dropdown>
           </div>
-        </Content>
-      </Layout>
-    </Layout>
+        </header>
+
+        {/* Content Area */}
+        <main className="content">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 };
 

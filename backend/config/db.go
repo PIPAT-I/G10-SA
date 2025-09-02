@@ -73,6 +73,8 @@ func SetupDatabase() {
 	createDefaultRoles()
 	createDefaultBorrowingLimits()
 	createDefaultUsers()
+	CreateDefaultBookStatus()
+	CreateDefaultReservationStatus()		
 }
 
 // createDefaultRoles สร้าง roles เริ่มต้น: user และ admin
@@ -93,9 +95,9 @@ func createDefaultRoles() {
 func createDefaultBorrowingLimits() {
 	// สร้าง borrowing limits เริ่มต้น
 	limits := []entity.BorrowingLimit{
+		{LimitNumber: 2},
 		{LimitNumber: 3},
 		{LimitNumber: 5},
-		{LimitNumber: 7},
 	}
 
 	for _, limit := range limits {
@@ -229,3 +231,43 @@ func createDefaultUsers() {
 func GetDB() *gorm.DB {
 	return db
 }
+
+func CreateDefaultBookStatus() {
+	defaultBookStatuses := []entity.BookStatus{
+		{StatusName: "Available"},
+		{StatusName: "Borrowed"},
+		{StatusName: "Hold"},
+	}
+
+	for _, status := range defaultBookStatuses {
+		db.FirstOrCreate(&status, entity.BookStatus{StatusName: status.StatusName})
+		fmt.Printf("Book status '%s' ready\n", status.StatusName)
+	}
+}
+
+
+func CreateDefaultReservationStatus() {
+	defaultReservationStatuses := []entity.ReservationStatus{
+		{StatusName: "Waiting"},
+		{StatusName: "Notified"},
+		{StatusName: "Fulfilled"},
+		{StatusName: "Expired"},
+		{StatusName: "Cancelled"},
+	}
+
+	for _, status := range defaultReservationStatuses {
+		db.FirstOrCreate(&status, entity.ReservationStatus{StatusName: status.StatusName})
+		fmt.Printf("Reservation status '%s' ready\n", status.StatusName)
+	}
+}
+
+
+
+
+
+
+
+
+
+
+

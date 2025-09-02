@@ -5,14 +5,20 @@ import (
 
 	"github.com/PIPAT-I/G10-SA/config"
 	"github.com/PIPAT-I/G10-SA/controllers"
+	"github.com/PIPAT-I/G10-SA/middlewares"
+	"github.com/PIPAT-I/G10-SA/services"
 )
 
 const PORT = "8088"
 
 func main() {
-	// ใช้อันที่โปรเจกต์คุณมีจริง
+	// 🚀 เริ่มต้นระบบ
 	config.ConnectDatabase()
 	config.SetupDatabase()
+
+	//  สร้าง Services
+	authSvc := &services.AuthService{DB: config.DB()}
+	authCtl := &controllers.AuthController{Svc: authSvc}
 
 	r := gin.Default()
 	r.Use(CORSMiddleware())
@@ -20,57 +26,64 @@ func main() {
 	// เสิร์ฟไฟล์สาธารณะ (ภาพปก/อีบุ๊ก)
 	r.Static("/static", "./static")
 
-	/* -------------------------- BOOKS -------------------------- */
-	r.POST("/books", controllers.CreateBook)
-	r.GET("/books", controllers.FindBooks)
-	r.GET("/book/:id", controllers.FindBookById)
-	r.PUT("/book/update", controllers.UpdateBook) // legacy route ที่ controller รองรับ
-	r.DELETE("/book/:id", controllers.DeleteBookById)
+	//  API Routes
+	api := r.Group("/api")
 
-	// Book-Author association (แทน pivot controller เดิม)
-	r.POST("/books/:id/authors", controllers.AddAuthorToBook)
-	r.GET("/books/:id/authors", controllers.GetAuthorsOfBook)
-	r.DELETE("/books/:bookId/authors/:authorId", controllers.RemoveAuthorFromBook)
+	/*  PUBLIC ROUTES - ไม่ต้อง Login */
+	{
+		// Authentication
+		auth := api.Group("/auth")
+		auth.POST("/login", authCtl.Login)
+	}
 
-	/* -------------------------- AUTHORS -------------------------- */
-	// (คง controller เดิมของคุณ)
-	r.POST("/new-author", controllers.CreateAuthor)
-	r.GET("/authors", controllers.FindAuthors)
-	r.GET("/author/:id", controllers.FindAuthorById)
-	r.PUT("/author/update", controllers.UpdateAuthor)
-	r.DELETE("/author/:id", controllers.DeleteAuthorById)
+	/*  USER ROUTES - ต้อง Login เป็น User */
+	user := api.Group("/user")
+	user.Use(middlewares.AuthRequired())
+	{
+		//  User Book Activities
+		user.POST("/reading-activities", controllers.CreateReadingActivity)
+		user.GET("/reading-activities", controllers.FindReadingActivities)
+		user.GET("/reading-activities/:id", controllers.FindReadingActivityById)
+		user.PUT("/reading-activities/:id", controllers.UpdateReadingActivity)
+		user.DELETE("/reading-activities/:id", controllers.DeleteReadingActivityById)
 
-	/* -------------------------- FILE TYPES -------------------------- */
-	r.POST("/file-types", controllers.CreateFileType)
-	r.GET("/file-types", controllers.FindFileTypes)
-	r.GET("/file-types/:id", controllers.FindFileTypeById)
-	r.PUT("/file-types/:id", controllers.UpdateFileType)
-	r.DELETE("/file-types/:id", controllers.DeleteFileTypeById)
+	}
 
-	/* -------------------------- LANGUAGES -------------------------- */
-	r.POST("/languages", controllers.CreateLanguage)
-	r.GET("/languages", controllers.FindLanguages)
-	r.GET("/languages/:id", controllers.FindLanguageById)
-	r.PUT("/languages/:id", controllers.UpdateLanguage)
-	r.DELETE("/languages/:id", controllers.DeleteLanguageById)
+	/*  ADMIN ROUTES - ต้อง Login เป็น Admin */
+	admin := api.Group("/admin")
+	admin.Use(middlewares.AuthRequired(), middlewares.RequireRoles("admin"))
+	{
+		//  Book Management
+		admin.POST("/books", controllers.CreateBook)
+		admin.PUT("/books/:id", controllers.UpdateBook)
+		admin.DELETE("/books/:id", controllers.DeleteBookById)
+		admin.POST("/books/:id/authors", controllers.AddAuthorToBook)
+		admin.DELETE("/books/:id/authors/:authorId", controllers.RemoveAuthorFromBook)
 
-	/* -------------------------- PUBLISHERS -------------------------- */
-	r.POST("/publishers", controllers.CreatePublisher)
-	r.GET("/publishers", controllers.FindPublishers)
-	r.GET("/publishers/:id", controllers.FindPublisherById)
-	r.PUT("/publishers/:id", controllers.UpdatePublisher)
-	r.DELETE("/publishers/:id", controllers.DeletePublisherById)
+		//  Author Management
+		admin.POST("/authors", controllers.CreateAuthor)
+		admin.PUT("/authors/:id", controllers.UpdateAuthor)
+		admin.DELETE("/authors/:id", controllers.DeleteAuthorById)
 
-	/* -------------------------- READING ACTIVITIES -------------------------- */
-	r.POST("/new-reading-activity", controllers.CreateReadingActivity)
-	r.GET("/reading-activities", controllers.FindReadingActivities)
-	r.GET("/reading-activity/:id", controllers.FindReadingActivityById)
-	r.PUT("/reading-activity/update", controllers.UpdateReadingActivity)
-	r.DELETE("/reading-activity/:id", controllers.DeleteReadingActivityById)
+		//  File Type Management
+		admin.POST("/file-types", controllers.CreateFileType)
+		admin.PUT("/file-types/:id", controllers.UpdateFileType)
+		admin.DELETE("/file-types/:id", controllers.DeleteFileTypeById)
 
-	/* -------------------------- UPLOADS -------------------------- */
-	r.POST("/upload/cover", controllers.UploadCover)
-	r.POST("/upload/ebook", controllers.UploadEbook)
+		//  Language Management
+		admin.POST("/languages", controllers.CreateLanguage)
+		admin.PUT("/languages/:id", controllers.UpdateLanguage)
+		admin.DELETE("/languages/:id", controllers.DeleteLanguageById)
+
+		//  Publisher Management
+		admin.POST("/publishers", controllers.CreatePublisher)
+		admin.PUT("/publishers/:id", controllers.UpdatePublisher)
+		admin.DELETE("/publishers/:id", controllers.DeletePublisherById)
+
+		//  File Uploads
+		admin.POST("/uploads/cover", controllers.UploadCover)
+		admin.POST("/uploads/ebook", controllers.UploadEbook)
+	}
 
 	r.Run(":" + PORT)
 }
