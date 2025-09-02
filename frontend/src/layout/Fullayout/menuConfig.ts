@@ -2,7 +2,7 @@ import React from "react";
 import {
   // Common icons
   HomeOutlined,
-  BookOutlined,
+  PlusOutlined,
   ReadOutlined,
   AppstoreOutlined,
   NotificationOutlined,
@@ -30,10 +30,10 @@ export const adminMenuConfig: MenuConfig[] = [
     path: "/admin/dashboard",
   },
   {
-    key: "admin-book",
-    icon: React.createElement(BookOutlined),
-    label: "Book Management",
-    path: "/admin/book",
+    key: "admin-addbook",
+    icon: React.createElement(PlusOutlined),
+    label: "Add Book",
+    path: "/admin/book/add",
   },
   {
     key: "admin-borrowing",
@@ -58,12 +58,6 @@ export const adminMenuConfig: MenuConfig[] = [
     icon: React.createElement(NotificationOutlined),
     label: "Announcement",
     path: "/admin/announcement",
-  },
-  {
-    key: "admin-reading-activity",
-    icon: React.createElement(FileTextOutlined),
-    label: "Reading Activity",
-    path: "/admin/reading-activity",
   },
   {
     key: "admin-issue",

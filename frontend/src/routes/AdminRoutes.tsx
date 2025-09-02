@@ -2,12 +2,16 @@ import FullLayout from '../layout/Fullayout';
 import { 
   AdminDashboard,
   AdminAnnouncement,
-  AdminBook,
+  AdminAddBook,
   AdminBorrowing,
   AdminCategory,
   AdminIssue,
-  AdminReadingActivity,
-  AdminReservation
+  AdminReservation,
+  AdminBookDetail,
+  AdminBookEdit,
+  AdminBookRecent,
+  AdminBookCollection,
+  AdminBookReading
 } from '../components/lazyComponents';
 
 const AdminRoutes = {
@@ -26,9 +30,23 @@ const AdminRoutes = {
       path: 'announcement',
       element: <AdminAnnouncement />
     },
-    {
-      path: 'book',
-      element: <AdminBook />
+    { path: 'book/add', 
+      element: <AdminAddBook /> 
+    },
+    { path: 'book/detail/:id', 
+      element: <AdminBookDetail />
+    },
+    { path: 'book/edit/:id', 
+      element: <AdminBookEdit /> 
+    },
+    { path: 'book/recent', 
+      element: <AdminBookRecent /> 
+    },
+    { path: 'book/collection/:mode/:id?', 
+      element: <AdminBookCollection /> 
+    },
+    { path: 'book/', 
+      element: <AdminBookReading /> 
     },
     {
       path: 'borrowing',
@@ -41,10 +59,6 @@ const AdminRoutes = {
     {
       path: 'issue',
       element: <AdminIssue />
-    },
-    {
-      path: 'reading-activity',
-      element: <AdminReadingActivity />
     },
     {
       path: 'reservation',

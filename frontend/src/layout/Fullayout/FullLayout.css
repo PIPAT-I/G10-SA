@@ -1,6 +1,17 @@
 /* FullLayout Styles */
 .full-layout {
   min-height: 100vh;
+  background: #f0f2f5;
+}
+
+/* ให้พื้นหลังทั้งหน้าเป็นสีอ่อน (กันกรณี body เดิมเป็นสีเข้ม) */
+html, body, #root {
+  background: #f0f2f5;
+}
+
+/* กัน antd override สีพื้นหลัง Layout ตัวนอก */
+.ant-layout.full-layout {
+  background: #f0f2f5 !important;
 }
 
 .layout-sider {
@@ -129,9 +140,9 @@
 }
 
 .content-wrapper {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
   padding: 24px;
   margin: 16px;
@@ -165,3 +176,4 @@
     height: calc(100vh - 96px);
   }
 }
+

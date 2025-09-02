@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import Loadable from './third-partry/Lodable';
+import Loadable from './third-partry/Loadable';
 
 // ======================== Authentication Pages ========================
 export const Login = Loadable(
@@ -14,6 +14,25 @@ export const AdminAnnouncement = Loadable(
 
 export const AdminBook = Loadable(
   lazy(() => import('../pages/Admin/Book/bookPage')));
+
+export const AdminAddBook = Loadable(
+  lazy(() => import('../pages/Admin/Book/Add')));
+
+export const AdminBookCollection = Loadable(
+  lazy(() => import('../pages/Admin/Book/BookCollection')));
+
+export const AdminBookDetail      = Loadable(
+  lazy(() => import('../pages/Admin/Book/Detail')));
+
+export const AdminBookEdit        = Loadable(
+  lazy(() => import('../pages/Admin/Book/Edit')));
+
+export const AdminBookRecent      = Loadable(
+  lazy(() => import('../pages/Admin/Book/Recent')));
+
+export const AdminBookReading      = Loadable(
+  lazy(() => import('../pages/Admin/Book/Reading')));
+
 
 export const AdminBorrowing = Loadable(
   lazy(() => import('../pages/Admin/Borrowing/borrowingPage')));

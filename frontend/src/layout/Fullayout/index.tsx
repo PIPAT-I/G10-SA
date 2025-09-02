@@ -76,7 +76,7 @@ const FullLayout: React.FC<FullLayoutProps> = ({ role }) => {
   const headerLeft = isReader ? 0 : broken ? 0 : siderVisibleWidth + LAYOUT_CONSTANTS.SIDER_MARGIN_LEFT;
 
   return (
-    <Layout className="full-layout">
+    <Layout className="full-layout" style={{ background: '#f0f2f5' }}>
       <Sider
         width={LAYOUT_CONSTANTS.SIDER_WIDTH}
         collapsed={collapsed}
