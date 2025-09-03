@@ -12,6 +12,7 @@ import {
   QuestionCircleOutlined,
   UserOutlined,
   StarOutlined,
+  PlusOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 
@@ -28,6 +29,12 @@ export const adminMenuConfig: MenuConfig[] = [
     icon: React.createElement(HomeOutlined),
     label: "Dashboard",
     path: "/admin/dashboard",
+  },
+  {
+    key: "admin-addbook",
+    icon: React.createElement(PlusOutlined),
+    label: "Add Book",
+    path: "/admin/book/add",
   },
   {
     key: "admin-book",

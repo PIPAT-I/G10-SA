@@ -1,14 +1,47 @@
-import cover1 from '../assets/1.jpg';
-export type Book = {
-  id: string;
+import type { Publisher } from "./Publisher";
+import type { FileType } from "./FileType";
+import type { Language } from "./Language";
+import type { Author } from "./Author";
+
+export interface Book {
+  ID: number;
   title: string;
-  author: string;
-  cover: string; // URL รูปปก
-};
-export const books: Book[] = [
-  { id: '1', title: 'เกียรติยศดวงดาว', author: 'วาดฝันแห่งรัก', cover: cover1 },
-  { id: '2', title: 'รุ่งอรุณกิ่งฉัตร', author: 'กิ่งฉัตร', cover: cover1  },
-  { id: '3', title: 'มีเพียงรักกิ่งฉัตร', author: 'กิ่งฉัตร', cover: cover1 },
-  { id: '4', title: 'Visit SWISS เที่ยว...', author: 'อลิศศักดิ์', cover: cover1 },
-  { id: '5', title: 'The Human Cosmos', author: 'Jo Marchant', cover: cover1 },
-];
+  isbn?: number;          // แนะนำให้ส่งเป็นเลขล้วน
+  total_pages?: number;
+  synopsis?: string;
+
+  // FK (snake_case ให้ตรง controller/DB)
+  publisher_id?: number;
+  file_type_id?: number;
+  language_id?: number;
+  book_status_id?: number;
+  book_license_id?: number;
+
+  // ไฟล์/รูป
+  coverImage?: string | null;
+  ebookFile?: string | null;
+
+  // preload relations
+  publisher?: Publisher;
+  file_type?: FileType;
+  language?: Language;
+  authors?: Author[];
+}
+
+export interface CreateBookRequest {
+  title: string;
+  isbn?: number;
+  total_pages?: number;
+  synopsis?: string;
+  publisher_id?: number;
+  file_type_id?: number;
+  language_id?: number;
+  book_status_id?: number;
+  book_license_id?: number;
+  cover_url?: string;
+  file_url?: string;
+}
+
+export interface UpdateBookRequest extends Partial<CreateBookRequest> {
+  ID: number;
+}

@@ -7,7 +7,13 @@ import {
   AdminCategory,
   AdminIssue,
   AdminReadingActivity,
-  AdminReservation
+  AdminReservation,
+  AdminAddBook,
+  AdminBookCollection,
+  AdminBookDetail,
+  AdminBookEdit,
+  AdminBookRecent,
+  AdminBookReading
 } from '../components/lazyComponents';
 import { Navigate } from 'react-router-dom';
 import { authen } from '../services/https/authentication/authen-service';
@@ -46,9 +52,23 @@ const AdminRoutes = {
       path: 'announcement',
       element: <AdminAnnouncement />
     },
-    {
-      path: 'book',
-      element: <AdminBook />
+    { path: 'book/add', 
+      element: <AdminAddBook /> 
+    },
+    { path: 'book/detail/:id', 
+      element: <AdminBookDetail />
+    },
+    { path: 'book/edit/:id', 
+      element: <AdminBookEdit /> 
+    },
+    { path: 'book/recent', 
+      element: <AdminBookRecent /> 
+    },
+    { path: 'book/collection/:mode/:id?', 
+      element: <AdminBookCollection /> 
+    },
+    { path: 'book/', 
+      element: <AdminBookReading /> 
     },
     {
       path: 'borrowing',
