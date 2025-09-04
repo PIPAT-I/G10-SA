@@ -4,13 +4,14 @@ import { Spin } from "antd";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[]; // เพิ่ม prop สำหรับระบุ role ที่อนุญาต
 }
 
-export default function ProtectedRoute({ children}: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
- if (isLoading) {
+  if (isLoading) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -27,13 +28,18 @@ export default function ProtectedRoute({ children}: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} />;
   }
 
-   const userRole = user?.Role?.Name || (user as any)?.role || 'user';
+  const userRole = user?.Role?.Name || (user as any)?.role || 'user';
 
-  if (userRole === 'admin') {
-    return <Navigate to="/admin/dashboard" replace />;
-  } else {
-    return <Navigate to="/user/library" replace />;
+  // ถ้าระบุ allowedRoles และ user ไม่มีสิทธิ์
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    // Redirect ไปหน้าที่เหมาะสมตาม role
+    if (userRole === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else {
+      return <Navigate to="/user/library" replace />;
+    }
   }
 
-  return <>{children}</>; 
+  // ถ้าผ่านการตรวจสอบทั้งหมด ให้แสดง children
+  return <>{children}</>;
 }

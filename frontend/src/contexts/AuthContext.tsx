@@ -20,17 +20,18 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // ===== Provider =====
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-const fetchUserLogin = async () => {
-    const token = localStorage.getItem("authToken");
-    console.log('AuthContext: fetchUserLogin - token:', token);
+  const fetchUserLogin = async () => {
+    const token = localStorage.getItem("token");
+    const tokenType = localStorage.getItem("token_type");
+
     
-    if (!token) {
-      console.log('AuthContext: No token found, setting unauthenticated');
+    if (!token || !tokenType) {
       setUser(null);
       setIsAuthenticated(false);
       setIsLoading(false);
@@ -38,68 +39,96 @@ const fetchUserLogin = async () => {
     }
 
     try {
-      const response = await GetCurrentUser();
-      console.log('AuthContext: GetCurrentUser response:', response);
       
-      if (response.status === 200) {
-        console.log('AuthContext: User authenticated successfully:', response.user);
-        setUser(response.user);
+      // ตั้งค่า Authorization header ก่อนส่ง request
+      const response = await GetCurrentUser();
+      
+      
+      if (response.status === 200 && response.data) {
+        setUser(response.data);
         setIsAuthenticated(true);
       } else {
-        console.log('AuthContext: GetCurrentUser failed, logging out');
-        logout();
+        // ไม่ logout ทันที ให้ user อยู่ในสถานะ unauthenticated
+        setUser(null);
+        setIsAuthenticated(false);
       }
-    } catch (error) {
-      console.error('AuthContext: GetCurrentUser error:', error);
-      logout();
+    } catch (error: any) {
+      
+      // เช็คว่าเป็น 401 จริงหรือไม่
+      if (error.response?.status === 401) {
+        // ลบ token ที่ไม่ valid
+        localStorage.removeItem("token");
+        localStorage.removeItem("token_type");
+      }
+      
+      setUser(null);
+      setIsAuthenticated(false);
     }
     
     setIsLoading(false);
   };
 
+  console.log("test user data --------",user);
 
-    useEffect(() => {
-      fetchUserLogin();
-    }, []);
+  useEffect(() => {
+    
+    const initAuth = async () => {
+      // รอให้ localStorage พร้อม
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await fetchUserLogin();
+    };
+    
+    initAuth();
+  }, []);
 
-const loginUser = async (credentials: LoginForm) => {
+  const loginUser = async (credentials: LoginForm) => {
     try {
-      console.log('AuthContext: Attempting login with credentials:', credentials);
       const response = await login(credentials);
-      console.log('AuthContext: Login response:', response);
       
-      if (response?.token) {
-        // เก็บ token ใน localStorage
-        localStorage.setItem("token", response.token);
-        localStorage.setItem("token_type", response.token_type);
-        
-        // ดึงข้อมูล user ล่าสุด
-        await fetchUserLogin();
-        console.log('AuthContext: User data updated after login');
-        return { success: true, user: response.user };
+      // เช็คหลายรูปแบบของ response
+      let token, token_type, userData;
+      
+      if (response?.data) {
+        token = response.data.token;
+        token_type = response.data.token_type;
+        userData = response.data.user;
       } else {
-        console.error('AuthContext: Login failed, no token received:', response);
-        message.error(response?.error || 'Login failed');
-        return { success: false, error: response?.error || 'Login failed' };
+        token = response?.token;
+        token_type = response?.token_type;
+        userData = response?.user;
+      }
+      
+      if (token && userData) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("token_type", token_type || "Bearer");
+        
+        // ตรวจสอบว่า save สำเร็จ
+        const savedToken = localStorage.getItem("token");
+        
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        return { success: true, user: userData };
+      } else {
+        return { success: false, error: 'Invalid server response' };
       }
     } catch (error) {
-      console.error('AuthContext: Login error:', error);
-      message.error('Login failed');
       return { success: false, error: 'Login failed' };
     }
-};
+  };
 
- const logout = () => {
+  const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("token_type");
     setUser(null);
     setIsAuthenticated(false);
   };
 
-const refreshUser = async () => {
+  const refreshUser = async () => {
     await fetchUserLogin();
-};
-return (
+  };
+
+  return (
     <AuthContext.Provider
       value={{
         user,

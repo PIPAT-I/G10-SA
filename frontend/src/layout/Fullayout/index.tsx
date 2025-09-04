@@ -14,10 +14,32 @@ import { adminMenuConfig, userMenuConfig } from "./menuConfig";
 function FullLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, logout, isLoading } = useAuth();
 
-  // ดึง role จาก user object (รองรับทั้ง GetCurrentUser และ login response)
-  const userRole = user?.Role?.Name || (user as any)?.role || 'user';
+  // ปรับปรุงการดึง role ให้ปลอดภัยขึ้น
+  const getUserRole = (user: any): string => {
+    if (!user) 
+      return 'user';
+    
+    // ลองหาใน path ต่างๆ
+    const possibleRoles = [
+      user?.Role?.Name,
+      user?.Role?.name,
+      user?.role?.Name,
+      user?.role?.name,
+      user?.role,
+      user?.roleName,
+    ];
+    
+    const foundRole = possibleRoles.find(role => 
+      role && typeof role === 'string' && role.trim() !== ''
+    );
+    
+    return foundRole || 'user';
+  };
+  const userRole = getUserRole(user);
+
+  console.log("User Role:", userRole);
 
   const handleLogout = () => {
     logout();

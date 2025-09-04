@@ -40,7 +40,7 @@ export default function LoginPage() {
         
         // ใช้ navigate แทน location.href เพื่อไม่ให้ refresh หน้า
         setTimeout(() => {
-          navigate("/user/library");
+          navigate(redirectPath, { replace: true });
         }, 1500);
       }
     } catch (err) {
