@@ -1,52 +1,44 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
-	"os"
+	"github.com/PIPAT-I/G10-SA/services"
 	"strings"
-
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
+var Hashkey = []byte("SECRET-KEY")
+var Blockkey = []byte("SECRET-BLOCK-KEY")
+
+// AuthRequired - ตรวจสอบ JWT Token และตั้งค่า user context
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		h := c.GetHeader("Authorization")
-		if !strings.HasPrefix(h, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		clientToken := c.Request.Header.Get("Authorization")
+		if clientToken == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "No Authorization header provided"})
 			return
 		}
-		tokenStr := strings.TrimPrefix(h, "Bearer ")
-		secret := os.Getenv("JWT_SECRET")
-		if secret == "" { secret = "CHANGE_ME_DEV_ONLY" }
+		extractedToken := strings.Split(clientToken, "Bearer ")
+		if len(extractedToken) == 2 {
+			clientToken = strings.TrimSpace(extractedToken[1])
+		} else {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Incorrect Format of Authorization Token"})
+			return
+		}
 
-		tok, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("bad signing method")
-			}
-			return []byte(secret), nil
-		})
-		if err != nil || !tok.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-			return
+		jwtWrapper := services.JwtWrapper{
+			SecretKey: "SvNQpBN8y3qlVrsGAYYWoJJk56LtzFHx",
+			Issuer:    "AuthService",
 		}
-		claims := tok.Claims.(jwt.MapClaims)
-		c.Set("userID", claims["sub"])
-		c.Set("role",   claims["role"])
-		c.Next()
-	}
-}
 
-func RequireRoles(roles ...string) gin.HandlerFunc {
-	allowed := map[string]struct{}{}
-	for _, r := range roles { allowed[r] = struct{}{} }
-	return func(c *gin.Context) {
-		role, _ := c.Get("role")
-		if _, ok := allowed[role.(string)]; !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		claims, err := jwtWrapper.ValidateToken(clientToken)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
+
 		}
+
+		c.Set("identifier", claims.Identifier)
 		c.Next()
 	}
 }

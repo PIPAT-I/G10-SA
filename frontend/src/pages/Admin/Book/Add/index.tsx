@@ -380,7 +380,7 @@ const AddBook = () => {
             <Form.Item name="cover" label="Cover Image">
               <Upload
                 name="file"
-                action={`${API}/upload/cover`}
+                action={`${API}/api/admin/uploads/cover`}
                 accept=".png,.jpg,.jpeg,.webp"
                 maxCount={1}
                 fileList={coverList}
@@ -404,7 +404,7 @@ const AddBook = () => {
             <Form.Item name="ebook" label="E-Book File">
               <Upload
                 name="file"
-                action={`${API}/upload/ebook`}
+                action={`${API}/api/admin/uploads/ebook`}
                 accept=".pdf,.epub"
                 maxCount={1}
                 fileList={ebookList}

@@ -1,4 +1,5 @@
-package controllers
+// backend/controllers/publisher.go
+package book
 
 import (
 	"net/http"
@@ -9,23 +10,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// POST /languages
-func CreateLanguage(c *gin.Context) {
-	var body entity.Languages
+// POST /publishers
+func CreatePublisher(c *gin.Context) {
+	var body entity.Publishers
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request body"})
 		return
 	}
-	if body.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+	if body.PublisherName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "publisher_name is required"})
 		return
 	}
 
 	db := config.DB()
 
-	var dup entity.Languages
-	if tx := db.Where("name = ?", body.Name).First(&dup); tx.RowsAffected > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "name already exists"})
+	// กันชื่อซ้ำ (ควรมี unique index ที่ DB ด้วย)
+	var dup entity.Publishers
+	if err := db.Where("publisher_name = ?", body.PublisherName).First(&dup).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "publisher_name already exists"})
 		return
 	}
 
@@ -36,13 +38,12 @@ func CreateLanguage(c *gin.Context) {
 	c.JSON(http.StatusCreated, body)
 }
 
-// GET /languages  (รองรับ ?q=  ?page=  ?page_size=)
-func FindLanguages(c *gin.Context) {
+// GET /publishers  (รองรับ ?q=  ?page=  ?page_size=)
+func FindPublishers(c *gin.Context) {
 	db := config.DB()
+	var items []entity.Publishers
 
-	var items []entity.Languages
 	q := c.Query("q")
-
 	pageSize := 20
 	page := 1
 	if v := c.Query("page_size"); v != "" {
@@ -56,9 +57,9 @@ func FindLanguages(c *gin.Context) {
 		}
 	}
 
-	tx := db.Model(&entity.Languages{})
+	tx := db.Model(&entity.Publishers{})
 	if q != "" {
-		tx = tx.Where("name LIKE ?", "%"+q+"%") // Postgres อาจใช้ ILIKE
+		tx = tx.Where("publisher_name LIKE ?", "%"+q+"%") // Postgres อาจใช้ ILIKE
 	}
 
 	if err := tx.
@@ -69,26 +70,27 @@ func FindLanguages(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, items)
 }
 
-// GET /languages/:id
-func FindLanguageById(c *gin.Context) {
-	var lang entity.Languages
+// GET /publishers/:id
+func FindPublisherById(c *gin.Context) {
+	var pub entity.Publishers
 	id := c.Param("id")
 
-	if err := config.DB().First(&lang, id).Error; err != nil {
+	if err := config.DB().First(&pub, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
 		return
 	}
-	c.JSON(http.StatusOK, lang)
+	c.JSON(http.StatusOK, pub)
 }
 
-// PUT /languages/:id
-func UpdateLanguage(c *gin.Context) {
+// PUT /publishers/:id
+func UpdatePublisher(c *gin.Context) {
 	id := c.Param("id")
 
-	var body entity.Languages
+	var body entity.Publishers
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -96,23 +98,24 @@ func UpdateLanguage(c *gin.Context) {
 
 	db := config.DB()
 
-	var current entity.Languages
+	var current entity.Publishers
 	if err := db.First(&current, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
 		return
 	}
 
-	if body.Name != "" && body.Name != current.Name {
-		var dup entity.Languages
-		if tx := db.Where("name = ?", body.Name).First(&dup); tx.RowsAffected > 0 {
-			c.JSON(http.StatusConflict, gin.H{"error": "name already exists"})
+	// กันชื่อซ้ำ ถ้ามีการเปลี่ยนชื่อ
+	if body.PublisherName != "" && body.PublisherName != current.PublisherName {
+		var dup entity.Publishers
+		if err := db.Where("publisher_name = ?", body.PublisherName).First(&dup).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "publisher_name already exists"})
 			return
 		}
 	}
 
 	upd := map[string]any{}
-	if body.Name != "" {
-		upd["name"] = body.Name
+	if body.PublisherName != "" {
+		upd["publisher_name"] = body.PublisherName
 	}
 	if len(upd) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
@@ -125,42 +128,44 @@ func UpdateLanguage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "updated successful"})
 }
 
-// DELETE /languages/:id  (เช็คการใช้งานใน books ก่อนลบ)
-func DeleteLanguageById(c *gin.Context) {
+// DELETE /publishers/:id  (เช็คการใช้งานใน books ก่อนลบ)
+func DeletePublisherById(c *gin.Context) {
 	idStr := c.Param("id")
-	langID64, err := strconv.ParseUint(idStr, 10, 64)
+	pubID64, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	langID := uint(langID64)
+	pubID := uint(pubID64)
 
 	db := config.DB()
 
-	// มีภาษานี้จริงไหม
-	var lang entity.Languages
-	if err := db.First(&lang, langID).Error; err != nil {
+	// 1) เช็คว่ามี publisher นี้จริงไหม
+	var pub entity.Publishers
+	if err := db.First(&pub, pubID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
 		return
 	}
 
-	// กันลบถ้า languages.id ถูกใช้อยู่ใน books.language_id
+	// 2) กันลบถ้า publishers.id ถูกใช้อยู่ใน books.publisher_id
 	var used int64
 	if err := db.Model(&entity.Book{}).
-		Where("language_id = ?", langID).
+		Where("publisher_id = ?", pubID).
 		Count(&used).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	if used > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "language is in use by books"})
+		c.JSON(http.StatusConflict, gin.H{"error": "publisher is in use by books"})
 		return
 	}
 
-	if err := db.Delete(&entity.Languages{}, langID).Error; err != nil {
+	// 3) ลบได้ปลอดภัย (เคารพ soft delete ถ้ามี gorm.Model)
+	if err := db.Delete(&entity.Publishers{}, pubID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

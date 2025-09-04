@@ -1,5 +1,5 @@
 // backend/controller/readingactivity.go
-package controllers
+package book
 
 import (
 	"net/http"

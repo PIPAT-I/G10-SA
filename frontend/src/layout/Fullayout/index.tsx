@@ -7,35 +7,30 @@ import {
 } from "@ant-design/icons";
 import { Dropdown } from "antd";
 import type { MenuProps } from "antd";
-
 import "./FullLayout.css";
-import { authen } from "../../services/https/authentication/authen-service";
+import { useAuth } from "../../contexts/AuthContext";
 import { adminMenuConfig, userMenuConfig } from "./menuConfig";
 
-const FullLayout: React.FC = () => {
+function FullLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
 
-  
-  const currentUser = authen.getUser();
-  const role = currentUser?.role as "admin" | "user" || "user";
+  // ดึง role จาก user object (รองรับทั้ง GetCurrentUser และ login response)
+  const userRole = user?.Role?.Name || (user as any)?.role || 'user';
 
-  // ตรวจสอบการ login
-  useEffect(() => {
-    if (!authen.isAuthenticated() || !currentUser) {
-      navigate('/login', { replace: true });
-      return;
-    }
-  }, [navigate, currentUser]);
-
- 
   const handleLogout = () => {
-    authen.logout();
+    logout();
     navigate('/login');
   };
 
   const handleProfile = () => {
-    navigate('/user/profile');
+    // Navigate ไป profile ตาม role
+    if (userRole === 'admin') {
+      navigate('/admin/profile'); // หรือ path ที่ admin ใช้
+    } else {
+      navigate('/user/profile');
+    }
   };
 
   // สร้าง dropdown menu items
@@ -58,13 +53,22 @@ const FullLayout: React.FC = () => {
   ];
 
   // เลือก menu ตาม role
-  const menuItems = role === "admin" ? adminMenuConfig : userMenuConfig;
+  const menuItems = userRole === "admin" ? adminMenuConfig : userMenuConfig;
   const currentPath = window.location.pathname;
 
-  if (!currentUser) {
-    return null;
+  // แสดง loading ขณะกำลังโหลด
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
   }
-
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -104,9 +108,9 @@ const FullLayout: React.FC = () => {
             {/* User Info */}
             <div className="user-info">
               <span className="user-name">
-                {currentUser.firstname} {currentUser.lastname}
+                {user?.Firstname} {user?.Lastname}
               </span>
-              <span className="user-role">({role})</span>
+              <span className="user-role">({userRole})</span>
             </div>
 
             {/* User Avatar with Dropdown */}
@@ -133,4 +137,4 @@ const FullLayout: React.FC = () => {
   );
 };
 
-export default FullLayout;
+export default FullLayout;  

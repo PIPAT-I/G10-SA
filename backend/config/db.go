@@ -3,9 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
-
 	"github.com/PIPAT-I/G10-SA/entity"
-	"golang.org/x/crypto/bcrypt" // สำหรับ hash password
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -28,7 +26,6 @@ func ConnectDatabase() {
 
 	fmt.Println("Database connected successfully!")
 
-	
 	SetupDatabase()
 }
 
@@ -74,7 +71,12 @@ func SetupDatabase() {
 	createDefaultBorrowingLimits()
 	createDefaultUsers()
 	CreateDefaultBookStatus()
-	CreateDefaultReservationStatus()		
+	CreateDefaultReservationStatus()
+	CreateDefaultPublishers()
+	CreateDefaultLanguages()
+	CreateDefaultFileTypes()
+	CreateDefaultAuthors()
+	CreateDefaultBooks()
 }
 
 // createDefaultRoles สร้าง roles เริ่มต้น: user และ admin
@@ -108,14 +110,13 @@ func createDefaultBorrowingLimits() {
 
 // createDefaultUsers สร้าง users เริ่มต้น (ข้อมูลพนักงานในองค์กร)
 func createDefaultUsers() {
-	
+
 	defaultUserPassword := "123456"
-	passwordUser, _ := bcrypt.GenerateFromPassword([]byte(defaultUserPassword), 10)
+	passwordUser, _ := HashPassword(defaultUserPassword)
 
 	defaultAdminPassword := "admin123"
-	passwordAdmin, _ := bcrypt.GenerateFromPassword([]byte(defaultAdminPassword), 10)
+	passwordAdmin,_ := HashPassword(defaultAdminPassword)
 
-	
 	users := []entity.User{
 		{
 			UserID:           "S001",
@@ -217,20 +218,14 @@ func createDefaultUsers() {
 			BorrowingLimitID: 1,
 			RoleID:           2,
 		},
-		
 	}
 
-	
 	for _, user := range users {
 		db.FirstOrCreate(&user, entity.User{UserID: user.UserID})
 		fmt.Printf("User '%s' ready\n", user.UserID)
 	}
 }
 
-// GetDB ส่งคืน database instance สำหรับการใช้งานในที่อื่นๆ
-func GetDB() *gorm.DB {
-	return db
-}
 
 func CreateDefaultBookStatus() {
 	defaultBookStatuses := []entity.BookStatus{
@@ -244,7 +239,6 @@ func CreateDefaultBookStatus() {
 		fmt.Printf("Book status '%s' ready\n", status.StatusName)
 	}
 }
-
 
 func CreateDefaultReservationStatus() {
 	defaultReservationStatuses := []entity.ReservationStatus{
@@ -261,13 +255,139 @@ func CreateDefaultReservationStatus() {
 	}
 }
 
+func CreateDefaultPublishers() {
+	defaultPublishers := []entity.Publishers{
+		{PublisherName: "สำนักพิมพ์มติชน"},
+		{PublisherName: "สำนักพิมพ์แสงดาว"},
+		{PublisherName: "โรงเรียนการศึกษา"},
+		{PublisherName: "นานมีบุ๊คส์"},
+		{PublisherName: "Penguin Books"},
+		{PublisherName: "สำนักพิมพ์อมรินทร์"},
+		{PublisherName: "สำนักพิมพ์วิภาษา"},
+	}
 
+	for _, publisher := range defaultPublishers {
+		db.FirstOrCreate(&publisher, entity.Publishers{PublisherName: publisher.PublisherName})
+		fmt.Printf("Publisher '%s' ready\n", publisher.PublisherName)
+	}
+}
 
+func CreateDefaultLanguages() {
+	defaultLanguages := []entity.Languages{
+		{Name: "ไทย"},
+		{Name: "English"},
+	}
 
+	for _, language := range defaultLanguages {
+		db.FirstOrCreate(&language, entity.Languages{Name: language.Name})
+		fmt.Printf("Language '%s' ready\n", language.Name)
+	}
+}
 
+func CreateDefaultFileTypes() {
+	defaultFileTypes := []entity.FileTypes{
+		{TypeName: "PDF"},
+		{TypeName: "EPUB"},
+	}
 
+	for _, fileType := range defaultFileTypes {
+		db.FirstOrCreate(&fileType, entity.FileTypes{TypeName: fileType.TypeName})
+		fmt.Printf("File type '%s' ready\n", fileType.TypeName)
+	}
+}
 
+func CreateDefaultAuthors() {
+	defaultAuthors := []entity.Author{
+		{AuthorName: "จิวลักษณ์ ภู่ทอง"},
+		{AuthorName: "ดิจิต้า"},
+		{AuthorName: "ประวัติกร"},
+		{AuthorName: "ลุยทริป"},
+		{AuthorName: "Jo Marchant"},
+		{AuthorName: "ศ.ดร.วิทยา นาควัชระ"},
+		{AuthorName: "อาจารย์สมชาย ใจดี"},
+		{AuthorName: "คุณหญิงปรีดา สุขใจ"},
+	}
 
+	for _, author := range defaultAuthors {
+		db.FirstOrCreate(&author, entity.Author{AuthorName: author.AuthorName})
+		fmt.Printf("Author '%s' ready\n", author.AuthorName)
+	}
+}
 
+func CreateDefaultBooks() {
+	defaultBooks := []entity.Book{
+		{
+			Title:         "เก่งรอดของจิวรา",
+			TotalPage:     320,
+			Synopsis:      "นิยายที่เล่าเรื่องราวของเด็กหญิงที่ต้องต่อสู้เพื่อความอยู่รอด ในสถานการณ์ที่ท้าทายและเต็มไปด้วยอุปสรรค ด้วยไหวพริบและความเก่งกาจของเธอ",
+			Isbn:          "9786169234567",
+			CoverImage:    "/static/covers/book1.jpg",
+			EbookFile:     "/static/ebooks/book1.pdf",
+			PublishedYear: 2023,
+			PublisherID:   1,      // สำนักพิมพ์มติชน
+			LanguageID:    1,      // ไทย
+			FileTypeID:    1,      // PDF
+			UserID:        "S010", // Admin
+		},
+		{
+			Title:         "รูปข่าวกับก่อสร้าง",
+			TotalPage:     280,
+			Synopsis:      "เรื่องราวการสื่อสารข่าวสารในยุคดิจิทัล การสร้างเนื้อหาที่มีคุณภาพ และการใช้เทคโนโลยีในการนำเสนอข้อมูลอย่างมีประสิทธิภาพ",
+			Isbn:          "9786169456789",
+			CoverImage:    "/static/covers/book2.jpg",
+			EbookFile:     "/static/ebooks/book2.epub",
+			PublishedYear: 2023,
+			PublisherID:   2,      // สำนักพิมพ์แสงดาว
+			LanguageID:    1,      // ไทย
+			FileTypeID:    2,      // EPUB
+			UserID:        "S010", // Admin
+		},
+		{
+			Title:         "นักเรียนกับการประวัติ",
+			TotalPage:     450,
+			Synopsis:      "การศึกษาประวัติศาสตร์แบบใหม่สำหรับนักเรียน ที่เน้นการเรียนรู้ผ่านกิจกรรมและการค้นคว้าด้วยตนเอง เพื่อให้เข้าใจบริบททางประวัติศาสตร์อย่างลึกซึ้ง",
+			Isbn:          "9786169678901",
+			CoverImage:    "/static/covers/book3.jpg",
+			EbookFile:     "/static/ebooks/book3.pdf",
+			PublishedYear: 2022,
+			PublisherID:   3,      // โรงเรียนการศึกษา
+			LanguageID:    1,      // ไทย
+			FileTypeID:    1,      // PDF
+			UserID:        "S010", // Admin
+		},
+		{
+			Title:         "Visit SWISS เก็บๆ",
+			TotalPage:     220,
+			Synopsis:      "คู่มือท่องเที่ยวประเทศสวิสเซอร์แลนด์ ครอบคลุมสถานที่ท่องเที่ยวที่น่าสนใจ วัฒนธรรมท้องถิ่น และเคล็ดลับการเดินทางที่จะทำให้ทริปของคุณน่าจดจำ",
+			Isbn:          "9786169890123",
+			CoverImage:    "/static/covers/book4.jpg",
+			EbookFile:     "/static/ebooks/book4.pdf",
+			PublishedYear: 2024,
+			PublisherID:   4,      // นานมีบุ๊คส์
+			LanguageID:    1,      // ไทย
+			FileTypeID:    1,      // PDF
+			UserID:        "S010", // Admin
+		},
+		{
+			Title:         "The Human Cosmos",
+			TotalPage:     380,
+			Synopsis:      "A journey through the universe and human consciousness. Exploring how ancient civilizations understood the cosmos and how modern science continues to unravel the mysteries of our place in the universe.",
+			Isbn:          "9786169012345",
+			CoverImage:    "/static/covers/book5.jpg",
+			EbookFile:     "/static/ebooks/book5.epub",
+			PublishedYear: 2021,
+			PublisherID:   5,      // Penguin Books
+			LanguageID:    2,      // English
+			FileTypeID:    2,      // EPUB
+			UserID:        "S010", // Admin
+		},
+	}
+
+	for _, book := range defaultBooks {
+		db.FirstOrCreate(&book, entity.Book{Isbn: book.Isbn})
+		fmt.Printf("Book '%s' ready\n", book.Title)
+	}
+	
+}
 
 

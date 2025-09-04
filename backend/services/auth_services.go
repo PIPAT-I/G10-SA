@@ -1,73 +1,57 @@
 package services
 
-import(
+
+import (
 	"errors"
-	"os"
-	"strings"
+	jwt "github.com/dgrijalva/jwt-go"
 	"time"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/PIPAT-I/G10-SA/entity"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
-type AuthService struct {
-	DB *gorm.DB
+// JwtWrapper wraps the signing key and the issuer
+type JwtWrapper struct {
+	SecretKey       string
+	Issuer          string
+	ExpirationHours int64
 }
 
-type LoginInput struct {
-	Identifier    string 
-	Password     string 
-}
-type LoginOutput struct {
-	Token string
-	User  entity.User
-	Role  string // ชื่อ role: "user" | "admin"
-}
-
-
-func issueJWT(userID, role string) (string, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		secret = "CHANGE_ME_DEV_ONLY"
-	}	
-	claims := jwt.MapClaims{
-		"sub":  userID,
-		"role": role,
-		"iat":  time.Now().Unix(),
-		"exp":  time.Now().Add(24 * time.Hour).Unix(),
-	}
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+// JwtClaim adds Identifier as a claim to the token
+type JwtClaim struct {
+	Identifier string
+	jwt.StandardClaims
 }
 
 
-func (s *AuthService) Login(in LoginInput) (*LoginOutput, error) {
-	var u entity.User
-	q := s.DB.Preload("Role")
-
-	if strings.Contains(in.Identifier, "@") {
-		if err := q.Where("email = ?", in.Identifier).First(&u).Error; err != nil {
-			return nil, errors.New("email or password incorrect")
-		}
-	} else {
-		if err := q.Where("user_id = ?", in.Identifier).First(&u).Error; err != nil {
-			return nil, errors.New("userID or password incorrect")
-		}
+func (j *JwtWrapper) GenerateToken(identifier string) (signedToken string, err error) {
+	claims := JwtClaim{
+		Identifier: identifier,
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    j.Issuer,
+			ExpiresAt: time.Now().Add(time.Duration(j.ExpirationHours) * time.Hour).Unix(),
+		},
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(in.Password)); err != nil {
-		return nil, errors.New("email/userID or password incorrect")
-	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err = token.SignedString([]byte(j.SecretKey))
+	return
+}
 
-	roleName := ""
-	if u.Role != nil {
-		roleName = u.Role.Name // สมมติ Role.Name = "user" | "admin"
-	}
-
-	tok, err := issueJWT(u.UserID, roleName)
+// ValidateToken validates the token and returns the claims
+func (j *JwtWrapper) ValidateToken(tokenString string) (claims JwtClaim, err error) {
+	token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(j.SecretKey), nil
+	})
 	if err != nil {
-		return nil, errors.New("cannot issue token")
+		return
 	}
 
-	return &LoginOutput{Token: tok, User: u, Role: roleName}, nil
+	if !token.Valid {
+		err = errors.New("invalid token")
+	}
+
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		err = errors.New("JWT expired")
+		return
+	}
+
+	return
 }

@@ -1,5 +1,5 @@
 // backend/controllers/filetype.go
-package controllers
+package book
 
 import (
 	"net/http"

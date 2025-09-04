@@ -2,7 +2,6 @@ import FullLayout from '../layout/Fullayout';
 import { 
   AdminDashboard,
   AdminAnnouncement,
-  AdminBook,
   AdminBorrowing,
   AdminCategory,
   AdminIssue,
@@ -15,29 +14,12 @@ import {
   AdminBookRecent,
   AdminBookReading
 } from '../components/lazyComponents';
-import { Navigate } from 'react-router-dom';
-import { authen } from '../services/https/authentication/authen-service';
-
-// Protected Admin Route Component
-const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  if (!authen.isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  const user = authen.getUser();
-  if (user?.role !== 'admin') {
-    return <Navigate to="/user" replace />;
-  }
-  
-  return <>{children}</>;
-};
 
 const AdminRoutes = {
   path: '/admin',
   element: (
-    <AdminProtectedRoute>
       <FullLayout />
-    </AdminProtectedRoute>
+    
   ),
   children: [
     {
@@ -52,24 +34,32 @@ const AdminRoutes = {
       path: 'announcement',
       element: <AdminAnnouncement />
     },
-    { path: 'book/add', 
+    // Book routes
+    { 
+      path: 'book/add', 
       element: <AdminAddBook /> 
     },
-    { path: 'book/detail/:id', 
+    { 
+      path: 'book/detail/:id', 
       element: <AdminBookDetail />
     },
-    { path: 'book/edit/:id', 
+    { 
+      path: 'book/edit/:id', 
       element: <AdminBookEdit /> 
     },
-    { path: 'book/recent', 
+    { 
+      path: 'book/recent', 
       element: <AdminBookRecent /> 
     },
-    { path: 'book/collection/:mode/:id?', 
+    { 
+      path: 'book/collection/:mode/:id?', 
       element: <AdminBookCollection /> 
     },
-    { path: 'book/', 
+    { 
+      path: 'book/', 
       element: <AdminBookReading /> 
     },
+    // Other routes
     {
       path: 'borrowing',
       element: <AdminBorrowing />
