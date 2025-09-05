@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/PIPAT-I/G10-SA/config"
-	"github.com/PIPAT-I/G10-SA/controllers"
+	"github.com/PIPAT-I/G10-SA/controllers/auth"
 	"github.com/PIPAT-I/G10-SA/controllers/user"
 	"github.com/PIPAT-I/G10-SA/middlewares"
 	"github.com/PIPAT-I/G10-SA/routes"
@@ -23,7 +23,7 @@ func main() {
 	r.Static("/static", "./static")
 
 	// Auth routes (ไม่ต้องการ middleware)
-	r.POST("/api/login", controllers.Login)
+	r.POST("/api/login", auth.Login)
 
 	// CurrentUser route (ต้องการ middleware)
 	r.GET("/api/currentuser", middlewares.AuthRequired(), user.GetCurrentUser)
@@ -32,6 +32,8 @@ func main() {
 	api.Use(middlewares.AuthRequired())
 	{
 		routes.SetupBookRoutes(api)
+		routes.SetupBorrowRoutes(api)
+		routes.SetupReservationRoutes(api)
 	}
 
 	r.Run("localhost:" + PORT)

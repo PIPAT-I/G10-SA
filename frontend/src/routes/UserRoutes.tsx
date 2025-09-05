@@ -10,8 +10,10 @@ import {
   UserProfile,
   UserReadingActivity,
   UserReservation,
-  UserReview
+  UserReview,
+  BookDetails
 } from '../components/lazyComponents';
+
 
 
 
@@ -30,6 +32,10 @@ const UserRoutes = {
     {
       path: 'library',
       element: <UserLibrary />
+    },
+    {
+      path: 'library/book/:id',
+      element: <BookDetails />
     },
     {
       path: 'announcement',

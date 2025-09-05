@@ -1,64 +1,16 @@
 import { useState, useEffect } from "react";
-import { Card, Typography, Table, Tag, Space, Button, message, Modal, Descriptions } from "antd";
-import { EyeOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { Card, Typography, Table, Tag, Space, Button, message, Modal, Descriptions, Popconfirm } from "antd";
+import { EyeOutlined, CheckCircleOutlined, ClockCircleOutlined, ReloadOutlined, UndoOutlined } from "@ant-design/icons";
+import { getAllBorrows, returnBorrow, calculateBorrowStatus, getStatusColor, getStatusText, autoReturnOverdueBooks } from "../../../services/https/borrow";
+import type { Borrow } from "../../../interfaces/Borrow";
 
 const { Title } = Typography;
 
-// 📋 Interface สำหรับข้อมูลการยืม
-interface BorrowData {
-  id: number;
-  borrowDate: string;
-  dueDate: string;
-  returnDate?: string;
-  userId: string;
-  user: {
-    firstname: string;
-    lastname: string;
-    email: string;
-  };
-  bookLicense: {
-    book: {
-      title: string;
-      isbn: string;
-    };
-  };
-  status: 'active' | 'returned' | 'overdue';
-}
-
 export default function BorrowingAdminPage() {
-  const [borrowData, setBorrowData] = useState<BorrowData[]>([]);
+  const [borrowData, setBorrowData] = useState<Borrow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedBorrow, setSelectedBorrow] = useState<BorrowData | null>(null);
+  const [selectedBorrow, setSelectedBorrow] = useState<Borrow | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-
-  // 🎨 สีสำหรับสถานะต่างๆ
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'blue';
-      case 'returned': return 'green';
-      case 'overdue': return 'red';
-      default: return 'gray';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return 'กำลังยืม';
-      case 'returned': return 'คืนแล้ว';
-      case 'overdue': return 'เกินกำหนด';
-      default: return 'ไม่ทราบ';
-    }
-  };
-
-  // 📊 คำนวณสถานะจากข้อมูล
-  const calculateStatus = (dueDate: string, returnDate?: string): 'active' | 'returned' | 'overdue' => {
-    if (returnDate) return 'returned';
-    
-    const now = new Date();
-    const due = new Date(dueDate);
-    
-    return now > due ? 'overdue' : 'active';
-  };
 
   // 📅 ฟอร์แมตวันที่
   const formatDate = (dateString: string) => {
@@ -69,25 +21,52 @@ export default function BorrowingAdminPage() {
     });
   };
 
+  // 📄 คืนหนังสือ
+  const handleReturnBook = async (borrow: Borrow) => {
+    try {
+      await returnBorrow(borrow.ID, borrow.user_id);
+      message.success('คืนหนังสือเรียบร้อยแล้ว');
+      loadBorrowData(); // โหลดข้อมูลใหม่
+    } catch (error) {
+      console.error('Error returning book:', error);
+      message.error('ไม่สามารถคืนหนังสือได้');
+    }
+  };
+
+  // Auto-return หนังสือเกินกำหนด
+  const handleAutoReturn = async () => {
+    try {
+      const result = await autoReturnOverdueBooks();
+      message.success(`ดำเนินการเสร็จสิ้น: คืนหนังสืออัตโนมัติ ${result.processed_count} เล่ม จากทั้งหมด ${result.total_overdue} เล่ม`);
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Auto-return errors:', result.errors);
+      }
+      loadBorrowData(); // โหลดข้อมูลใหม่
+    } catch (error) {
+      console.error('Error auto-returning books:', error);
+      message.error('ไม่สามารถดำเนินการคืนหนังสืออัตโนมัติได้');
+    }
+  };
+
   // 📋 Column สำหรับตาราง
   const columns = [
     {
       title: 'ลำดับ',
-      dataIndex: 'id',
-      key: 'id',
+      dataIndex: 'ID',
+      key: 'ID',
       width: 80,
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: 'ผู้ยืม',
       key: 'user',
-      render: (record: BorrowData) => (
+      render: (record: Borrow) => (
         <div>
           <div style={{ fontWeight: 500 }}>
-            {record.user.firstname} {record.user.lastname}
+            {record.user?.FirstName} {record.user?.LastName}
           </div>
           <div style={{ fontSize: '12px', color: '#6B7280' }}>
-            {record.userId}
+            {record.user_id}
           </div>
         </div>
       ),
@@ -95,40 +74,40 @@ export default function BorrowingAdminPage() {
     {
       title: 'หนังสือ',
       key: 'book',
-      render: (record: BorrowData) => (
+      render: (record: Borrow) => (
         <div>
           <div style={{ fontWeight: 500 }}>
-            {record.bookLicense.book.title}
+            {record.book_license?.book?.title || 'ไม่มีข้อมูล'}
           </div>
           <div style={{ fontSize: '12px', color: '#6B7280' }}>
-            ISBN: {record.bookLicense.book.isbn}
+            ISBN: {record.book_license?.book?.isbn || 'ไม่มีข้อมูล'}
           </div>
         </div>
       ),
     },
     {
       title: 'วันที่ยืม',
-      dataIndex: 'borrowDate',
-      key: 'borrowDate',
+      dataIndex: 'borrow_date',
+      key: 'borrow_date',
       render: (date: string) => formatDate(date),
     },
     {
       title: 'กำหนดคืน',
-      dataIndex: 'dueDate',
-      key: 'dueDate',
+      dataIndex: 'due_date',
+      key: 'due_date',
       render: (date: string) => formatDate(date),
     },
     {
       title: 'วันที่คืน',
-      dataIndex: 'returnDate',
-      key: 'returnDate',
+      dataIndex: 'return_date',
+      key: 'return_date',
       render: (date?: string) => date ? formatDate(date) : '-',
     },
     {
       title: 'สถานะ',
       key: 'status',
-      render: (record: BorrowData) => {
-        const status = calculateStatus(record.dueDate, record.returnDate);
+      render: (record: Borrow) => {
+        const status = calculateBorrowStatus(record.due_date, record.return_date);
         return (
           <Tag color={getStatusColor(status)} icon={
             status === 'returned' ? <CheckCircleOutlined /> : <ClockCircleOutlined />
@@ -141,22 +120,34 @@ export default function BorrowingAdminPage() {
     {
       title: 'การดำเนินการ',
       key: 'action',
-      render: (record: BorrowData) => (
-        <Space>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => showDetail(record)}
-          >
-            ดูรายละเอียด
-          </Button>
-        </Space>
-      ),
+      render: (record: Borrow) => {
+        const status = calculateBorrowStatus(record.due_date, record.return_date);
+        return (
+          <Space>
+            <Button
+              type="link"
+              icon={<EyeOutlined />}
+              onClick={() => showDetail(record)}
+            >
+              ดูรายละเอียด
+            </Button>
+            {status !== 'returned' && (
+              <Button
+                type="link"
+                onClick={() => handleReturnBook(record)}
+                style={{ color: '#52c41a' }}
+              >
+                คืนหนังสือ
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
   // 🔍 แสดงรายละเอียด
-  const showDetail = (record: BorrowData) => {
+  const showDetail = (record: Borrow) => {
     setSelectedBorrow(record);
     setDetailModalVisible(true);
   };
@@ -165,74 +156,8 @@ export default function BorrowingAdminPage() {
   const loadBorrowData = async () => {
     setLoading(true);
     try {
-      // TODO: เรียก API จริง
-      // const response = await fetch('/api/admin/borrows', {
-      //   headers: { Authorization: `Bearer ${authen.getToken()}` }
-      // });
-      
-      // Mock Data สำหรับทดสอบ
-      const mockData: BorrowData[] = [
-        {
-          id: 1,
-          borrowDate: '2025-08-20T00:00:00Z',
-          dueDate: '2025-09-05T00:00:00Z',
-          returnDate: undefined,
-          userId: 'S001',
-          user: {
-            firstname: 'สมชาย',
-            lastname: 'ใจดี',
-            email: 'somchai@email.com'
-          },
-          bookLicense: {
-            book: {
-              title: 'Harry Potter and the Philosopher\'s Stone',
-              isbn: '978-0747532699'
-            }
-          },
-          status: 'overdue'
-        },
-        {
-          id: 2,
-          borrowDate: '2025-08-25T00:00:00Z',
-          dueDate: '2025-09-10T00:00:00Z',
-          returnDate: '2025-09-01T00:00:00Z',
-          userId: 'S002',
-          user: {
-            firstname: 'สมใส',
-            lastname: 'รักการอ่าน',
-            email: 'somsai@email.com'
-          },
-          bookLicense: {
-            book: {
-              title: 'The Lord of the Rings',
-              isbn: '978-0544003415'
-            }
-          },
-          status: 'returned'
-        },
-        {
-          id: 3,
-          borrowDate: '2025-09-01T00:00:00Z',
-          dueDate: '2025-09-15T00:00:00Z',
-          returnDate: undefined,
-          userId: 'S003',
-          user: {
-            firstname: 'สมศักดิ์',
-            lastname: 'หนังสือดี',
-            email: 'somsak@email.com'
-          },
-          bookLicense: {
-            book: {
-              title: 'A Game of Thrones',
-              isbn: '978-0553593716'
-            }
-          },
-          status: 'active'
-        }
-      ];
-      
-      setBorrowData(mockData);
-      
+      const data = await getAllBorrows();
+      setBorrowData(data);
     } catch (error) {
       console.error('Error loading borrow data:', error);
       message.error('ไม่สามารถโหลดข้อมูลการยืมได้');
@@ -258,13 +183,24 @@ export default function BorrowingAdminPage() {
         </p>
       </div>
 
+      {/* ปุ่ม Auto-return */}
+      <div style={{ marginBottom: "16px", textAlign: "right" }}>
+        <Button
+          type="primary"
+          onClick={handleAutoReturn}
+          style={{ backgroundColor: "#ff8a00", borderColor: "#ff8a00" }}
+        >
+          คืนหนังสือเกินกำหนดอัตโนมัติ
+        </Button>
+      </div>
+
       {/* ตารางข้อมูลการยืม */}
       <Card>
         <Table
           columns={columns}
           dataSource={borrowData}
           loading={loading}
-          rowKey="id"
+          rowKey="ID"
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
@@ -289,32 +225,32 @@ export default function BorrowingAdminPage() {
         {selectedBorrow && (
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="รหัสการยืม">
-              #{selectedBorrow.id}
+              #{selectedBorrow.ID}
             </Descriptions.Item>
             <Descriptions.Item label="ผู้ยืม">
-              {selectedBorrow.user.firstname} {selectedBorrow.user.lastname} ({selectedBorrow.userId})
+              {selectedBorrow.user?.FirstName} {selectedBorrow.user?.LastName} ({selectedBorrow.user_id})
             </Descriptions.Item>
             <Descriptions.Item label="อีเมล">
-              {selectedBorrow.user.email}
+              {selectedBorrow.user?.Email || 'ไม่มีข้อมูล'}
             </Descriptions.Item>
             <Descriptions.Item label="หนังสือ">
-              {selectedBorrow.bookLicense.book.title}
+              {selectedBorrow.book_license?.book?.title || 'ไม่มีข้อมูล'}
             </Descriptions.Item>
             <Descriptions.Item label="ISBN">
-              {selectedBorrow.bookLicense.book.isbn}
+              {selectedBorrow.book_license?.book?.isbn || 'ไม่มีข้อมูล'}
             </Descriptions.Item>
             <Descriptions.Item label="วันที่ยืม">
-              {formatDate(selectedBorrow.borrowDate)}
+              {formatDate(selectedBorrow.borrow_date)}
             </Descriptions.Item>
             <Descriptions.Item label="กำหนดคืน">
-              {formatDate(selectedBorrow.dueDate)}
+              {formatDate(selectedBorrow.due_date)}
             </Descriptions.Item>
             <Descriptions.Item label="วันที่คืน">
-              {selectedBorrow.returnDate ? formatDate(selectedBorrow.returnDate) : 'ยังไม่คืน'}
+              {selectedBorrow.return_date ? formatDate(selectedBorrow.return_date) : 'ยังไม่คืน'}
             </Descriptions.Item>
             <Descriptions.Item label="สถานะ">
-              <Tag color={getStatusColor(calculateStatus(selectedBorrow.dueDate, selectedBorrow.returnDate))}>
-                {getStatusText(calculateStatus(selectedBorrow.dueDate, selectedBorrow.returnDate))}
+              <Tag color={getStatusColor(calculateBorrowStatus(selectedBorrow.due_date, selectedBorrow.return_date))}>
+                {getStatusText(calculateBorrowStatus(selectedBorrow.due_date, selectedBorrow.return_date))}
               </Tag>
             </Descriptions.Item>
           </Descriptions>

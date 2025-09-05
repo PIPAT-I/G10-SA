@@ -74,7 +74,7 @@ func GetCurrentUser(c *gin.Context) {
 	var user entity.User
 
 	db := config.DB()
-	result := db.Preload("Role").Preload("Profile").Preload("BorrowingLimit").Where("email = ? OR user_id = ?", Identifier, Identifier).First(&user)
+	result := db.Preload("Role").Preload("Profile").Where("email = ? OR user_id = ?", Identifier, Identifier).First(&user)
 	if result.Error != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return

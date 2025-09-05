@@ -43,7 +43,6 @@ func SetupDatabase() {
 		&entity.Publishers{},
 		&entity.BookStatus{},
 		&entity.BookLicense{},
-		&entity.BorrowingLimit{},
 		&entity.Borrow{},
 		&entity.ReadingActivity{},
 		&entity.Reservation{},
@@ -64,11 +63,12 @@ func SetupDatabase() {
 		&entity.ReviewReply{},
 		&entity.ReviewVote{},
 		&entity.NotificationType{},
+		&entity.BorrowPolicy{},
 	)
 
 	// เพิ่มข้อมูลเริ่มต้น
 	createDefaultRoles()
-	createDefaultBorrowingLimits()
+	
 	createDefaultUsers()
 	CreateDefaultBookStatus()
 	CreateDefaultReservationStatus()
@@ -77,6 +77,10 @@ func SetupDatabase() {
 	CreateDefaultFileTypes()
 	CreateDefaultAuthors()
 	CreateDefaultBooks()
+	createDefaultBorrowPolicies()
+	CacheBookStatusIDs()
+	CreateBookLicensesForBook(1, 3) // สร้าง BookLicense 3 ชุด สำหรับ Book ID 1
+	CreateBookLicensesForBook(2, 2) // สร้าง BookLicense 2 ชุด สำหรับ Book ID 2
 }
 
 // createDefaultRoles สร้าง roles เริ่มต้น: user และ admin
@@ -92,22 +96,6 @@ func createDefaultRoles() {
 		fmt.Printf("Role '%s' ready\n", role.Name)
 	}
 }
-
-// createDefaultBorrowingLimits สร้าง borrowing limits เริ่มต้น
-func createDefaultBorrowingLimits() {
-	// สร้าง borrowing limits เริ่มต้น
-	limits := []entity.BorrowingLimit{
-		{LimitNumber: 2},
-		{LimitNumber: 3},
-		{LimitNumber: 5},
-	}
-
-	for _, limit := range limits {
-		db.FirstOrCreate(&limit, entity.BorrowingLimit{LimitNumber: limit.LimitNumber})
-		fmt.Printf("Borrowing limit %d books ready\n", limit.LimitNumber)
-	}
-}
-
 // createDefaultUsers สร้าง users เริ่มต้น (ข้อมูลพนักงานในองค์กร)
 func createDefaultUsers() {
 
@@ -125,7 +113,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 1",
 			Email:            "email1@example.com",
 			PhoneNumber:      "0801234567",
-			BorrowingLimitID: 1,
 			RoleID:           1,
 		},
 		{
@@ -135,7 +122,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 2",
 			Email:            "email2@example.com",
 			PhoneNumber:      "0801234568",
-			BorrowingLimitID: 2,
 			RoleID:           1,
 		},
 		{
@@ -145,7 +131,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 3",
 			Email:            "email3@example.com",
 			PhoneNumber:      "0801234569",
-			BorrowingLimitID: 3,
 			RoleID:           1,
 		},
 		{
@@ -155,7 +140,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 4",
 			Email:            "email4@example.com",
 			PhoneNumber:      "0801234570",
-			BorrowingLimitID: 1,
 			RoleID:           1,
 		},
 		{
@@ -165,7 +149,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 5",
 			Email:            "email5@example.com",
 			PhoneNumber:      "0801234571",
-			BorrowingLimitID: 2,
 			RoleID:           1,
 		},
 		{
@@ -175,7 +158,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 6",
 			Email:            "email6@example.com",
 			PhoneNumber:      "0801234572",
-			BorrowingLimitID: 3,
 			RoleID:           1,
 		},
 		{
@@ -185,7 +167,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 7",
 			Email:            "email7@example.com",
 			PhoneNumber:      "0801234573",
-			BorrowingLimitID: 1,
 			RoleID:           1,
 		},
 		{
@@ -195,7 +176,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 8",
 			Email:            "email8@example.com",
 			PhoneNumber:      "0801234574",
-			BorrowingLimitID: 2,
 			RoleID:           1,
 		},
 		{
@@ -205,7 +185,6 @@ func createDefaultUsers() {
 			Lastname:         "นามสกุล 9",
 			Email:            "email9@example.com",
 			PhoneNumber:      "0801234575",
-			BorrowingLimitID: 3,
 			RoleID:           1,
 		},
 		{
@@ -215,7 +194,6 @@ func createDefaultUsers() {
 			Lastname:         "SA-libary",
 			Email:            "email10@example.com",
 			PhoneNumber:      "0801234576",
-			BorrowingLimitID: 1,
 			RoleID:           2,
 		},
 	}
@@ -356,12 +334,12 @@ func CreateDefaultBooks() {
 			UserID:        "S010", // Admin
 		},
 		{
-			Title:         "Visit SWISS เก็บๆ",
+			Title:         "เที่ยวสวิสเซอร์แลนด์",
 			TotalPage:     220,
 			Synopsis:      "คู่มือท่องเที่ยวประเทศสวิสเซอร์แลนด์ ครอบคลุมสถานที่ท่องเที่ยวที่น่าสนใจ วัฒนธรรมท้องถิ่น และเคล็ดลับการเดินทางที่จะทำให้ทริปของคุณน่าจดจำ",
 			Isbn:          "9786169890123",
 			CoverImage:    "/static/covers/book4.jpg",
-			EbookFile:     "/static/ebooks/book4.pdf",
+			EbookFile:     "/static/ebooks/book4.epub",
 			PublishedYear: 2024,
 			PublisherID:   4,      // นานมีบุ๊คส์
 			LanguageID:    1,      // ไทย
@@ -388,6 +366,100 @@ func CreateDefaultBooks() {
 		fmt.Printf("Book '%s' ready\n", book.Title)
 	}
 	
+	// เชื่อม Authors กับ Books (many-to-many relationship)
+	linkAuthorsToBooks()
+}
+
+func linkAuthorsToBooks() {
+	// เชื่อม Authors กับ Books
+	authorBookLinks := map[string][]string{
+		"เก่งรอดของจิวรา": {"จิวลักษณ์ ภู่ทอง"},
+		"รูปข่าวกับก่อสร้าง": {"ดิจิต้า"},
+		"นักเรียนกับการประวัติ": {"ประวัติกร"},
+		"เที่ยวสวิสเซอร์แลนด์": {"ลุยทริป"},
+		"The Human Cosmos": {"Jo Marchant"},
+	}
+
+	for bookTitle, authorNames := range authorBookLinks {
+		var book entity.Book
+		if err := db.Where("title = ?", bookTitle).First(&book).Error; err != nil {
+			fmt.Printf("Book '%s' not found\n", bookTitle)
+			continue
+		}
+
+		for _, authorName := range authorNames {
+			var author entity.Author
+			if err := db.Where("author_name = ?", authorName).First(&author).Error; err != nil {
+				fmt.Printf("Author '%s' not found\n", authorName)
+				continue
+			}
+
+			// เชื่อม Author กับ Book
+			if err := db.Model(&book).Association("Authors").Append(&author); err != nil {
+				fmt.Printf("Error linking author '%s' to book '%s': %v\n", authorName, bookTitle, err)
+			} else {
+				fmt.Printf("Linked author '%s' to book '%s'\n", authorName, bookTitle)
+			}
+		}
+	}
 }
 
 
+func createDefaultBorrowPolicies() {
+	borrowPolicies := []entity.BorrowPolicy{
+		{RoleID: 1, MaxBorrowDay: 7, MaxBorrowBook: 2, HoldHour: 3}, // Policy for 'user' role
+		{RoleID: 2, MaxBorrowDay: 14, MaxBorrowBook: 5, HoldHour: 24}, // Policy for 'admin' role
+	}
+
+	for _, policy := range borrowPolicies {
+		db.FirstOrCreate(&policy, entity.BorrowPolicy{RoleID: policy.RoleID})
+		fmt.Printf("Borrow policy for role ID %d ready\n", policy.RoleID)
+	}
+}
+
+
+var StatusID struct{
+    Available uint
+    Borrowed  uint
+    Hold      uint
+}
+
+func CacheBookStatusIDs() error {
+    var s entity.BookStatus
+
+    if err := db.Where("status_name = ?", "Available").First(&s).Error; err != nil { return err }
+    StatusID.Available = s.ID
+
+    if err := db.Where("status_name = ?", "Borrowed").First(&s).Error; err != nil { return err }
+    StatusID.Borrowed = s.ID
+
+    if err := db.Where("status_name = ?", "Hold").First(&s).Error; err != nil { return err }
+    StatusID.Hold = s.ID
+
+    return nil
+}
+
+func CreateBookLicensesForBook(bookID uint, count int) error {
+	if count <= 0 {
+		count = 1
+	}
+	availableID := StatusID.Available
+
+	// ตรวจว่า book มีจริง
+	var b entity.Book
+	if err := db.First(&b, bookID).Error; err != nil {
+		return err
+	}
+
+	for i := 0; i < count; i++ {
+		lic := entity.BookLicense{
+			BookID:       b.ID,
+			BookStatusID: availableID,
+		}
+		if err := db.Create(&lic).Error; err != nil {
+			return err
+		}
+	}
+	fmt.Printf("Created %d license(s) for Book #%d\n", count, bookID)
+	return nil
+}

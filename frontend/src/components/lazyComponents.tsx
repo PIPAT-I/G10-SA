@@ -103,3 +103,7 @@ export const UserReservation = Loadable(
 export const UserReview = Loadable(
   lazy(() => import('../pages/User/Review/reviewPage'))
 );
+
+export const BookDetails = Loadable(
+  lazy(() => import('../pages/User/Library/BookDetails'))
+);

@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { message } from 'antd';
 import type {LoginForm} from '../interfaces/Login';
 import { login,GetCurrentUser } from '../services/https/Authen';
 import type { User } from '../interfaces';
@@ -29,7 +28,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchUserLogin = async () => {
     const token = localStorage.getItem("token");
     const tokenType = localStorage.getItem("token_type");
-
+    
+    console.log('fetchUserLogin - tokens:', { token: !!token, tokenType });
     
     if (!token || !tokenType) {
       setUser(null);
@@ -39,24 +39,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      
-      // ตั้งค่า Authorization header ก่อนส่ง request
       const response = await GetCurrentUser();
       
+      console.log('fetchUserLogin - response:', response);
       
       if (response.status === 200 && response.data) {
+        console.log('fetchUserLogin - setting user:', response.data);
         setUser(response.data);
         setIsAuthenticated(true);
       } else {
-        // ไม่ logout ทันที ให้ user อยู่ในสถานะ unauthenticated
+        console.log('fetchUserLogin - invalid response');
         setUser(null);
         setIsAuthenticated(false);
       }
     } catch (error: any) {
-      
-      // เช็คว่าเป็น 401 จริงหรือไม่
+      console.log('fetchUserLogin - error:', error);
       if (error.response?.status === 401) {
-        // ลบ token ที่ไม่ valid
         localStorage.removeItem("token");
         localStorage.removeItem("token_type");
       }
@@ -67,8 +65,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     setIsLoading(false);
   };
-
-  console.log("test user data --------",user);
 
   useEffect(() => {
     
@@ -102,9 +98,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem("token", token);
         localStorage.setItem("token_type", token_type || "Bearer");
         
-        // ตรวจสอบว่า save สำเร็จ
-        const savedToken = localStorage.getItem("token");
-        
         setUser(userData);
         setIsAuthenticated(true);
         
@@ -127,6 +120,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     await fetchUserLogin();
   };
+
+  // เรียก fetchUserLogin เมื่อ component mount
+  useEffect(() => {
+    console.log('AuthContext mounted - calling fetchUserLogin');
+    fetchUserLogin();
+  }, []);
 
   return (
     <AuthContext.Provider

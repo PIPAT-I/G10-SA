@@ -1,329 +1,295 @@
-import { Card, Button, Typography, Row, Col, Tag } from "antd";
-import { BookOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Card, Typography, Tag, Button, message, Row, Col, Empty, Space, Popconfirm } from "antd";
+import { DeleteOutlined, BookOutlined } from "@ant-design/icons";
+import { 
+  getUserReservations, 
+  cancelReservation, 
+  getReservationStatusColor, 
+  getReservationStatusText
+} from "../../../services/https/reservation";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import type { Reservation } from "../../../interfaces/Reservation";
 
 const { Title, Text } = Typography;
 
-// Mock data
-const mockBookings = [
-  {
-    id: 1,
-    bookTitle: "Advanced React Patterns",
-    author: "Kent C. Dodds",
-    reservationDate: "2025-08-05",
-    queue: 30,
-    yourQueue: 12,
-    status: "waiting",
-  },
-  {
-    id: 2,
-    bookTitle: "TypeScript Deep Dive",
-    author: "Basarat Ali Syed",
-    reservationDate: "2025-08-03",
-    queue: 15,
-    yourQueue: 4,
-    status: "waiting",
-  },
-  {
-    id: 3,
-    bookTitle: "Clean Code Architecture",
-    author: "Robert C. Martin",
-    reservationDate: "2025-08-01",
-    queue: 8,
-    yourQueue: 0,
-    status: "ready",
-  },
-];
+export default function ReservationUserPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [reservationData, setReservationData] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(false);
 
-export default function ReservationPage() {
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+  // สำหรับความเข้ากันได้กับ API response format
+  const userId = user?.UserID || (user as any)?.user_id;
+
+  //  ฟอร์แมตวันที่
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
-  const handleAction = (booking: any) => {
-    console.log("Action clicked for booking:", booking.id);
+  // ยกเลิกการจอง
+  const handleCancelReservation = async (reservation: Reservation) => {
+    if (!userId) {
+      message.error('ไม่พบข้อมูลผู้ใช้');
+      return;
+    }
+
+    try {
+      await cancelReservation(reservation.ID, userId, 'ยกเลิกโดยผู้ใช้');
+      message.success('ยกเลิกการจองเรียบร้อยแล้ว');
+      loadReservationData(); // โหลดข้อมูลใหม่
+    } catch (error) {
+      console.error('Error cancelling reservation:', error);
+      message.error('ไม่สามารถยกเลิกการจองได้');
+    }
   };
 
-  const handleBrowseLibrary = () => {
-    console.log("Navigate to library");
+  //  โหลดข้อมูลการจอง
+  const loadReservationData = async () => {
+    if (!userId) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await getUserReservations(userId);
+      setReservationData(data);
+    } catch (error) {
+      console.error('Error loading reservation data:', error);
+      message.error('ไม่สามารถโหลดข้อมูลการจองได้');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  //  โหลดข้อมูลเมื่อเริ่มต้น
+  useEffect(() => {
+    if (userId) {
+      loadReservationData();
+    }
+  }, [userId]);
 
   return (
-    <div
-      style={{
-        padding: "24px",
-        background: "#ffffff",
-        minHeight: "100vh",
-        fontFamily: "Kanit, sans-serif",
-      }}
-    >
+    <div style={{ 
+      padding: '24px', 
+      backgroundColor: '#f5f5f5', 
+      minHeight: '100vh',
+      fontFamily: 'Kanit, sans-serif'
+    }}>
       {/* Page Header */}
-      <div
-        style={{
-          marginBottom: "24px",
-          padding: "24px",
-          background: "#fff",
-          borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div style={{ 
+        marginBottom: "32px", 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        flexWrap: 'wrap'
+      }}>
         <div>
-          <Title
-            level={2}
-            style={{
-              margin: 0,
-              color: "#1f1f1f",
-              fontSize: "28px",
-              fontWeight: 500,
-              fontFamily: "Kanit, sans-serif",
-            }}
-          >
+          <Title level={2} style={{ color: "#FF8A00", margin: 0, fontSize: '2rem' }}>
             My Reservations
           </Title>
-          <Text
-            style={{
-              color: "#666",
-              fontSize: "16px",
-              marginTop: "8px",
-              display: "block",
-              fontWeight: 300,
-              fontFamily: "Kanit, sans-serif",
-            }}
-          >
+          <Text style={{ color: "#6B7280", fontSize: '16px' }}>
             Track your book reservations and queue status
           </Text>
         </div>
-        <Button
-          type="primary"
-          icon={<BookOutlined />}
-          size="large"
-          onClick={handleBrowseLibrary}
-          style={{
-            height: "44px",
-            padding: "0 20px",
-            borderRadius: "8px",
-            fontWeight: 400,
-            fontFamily: "Kanit, sans-serif",
-            background: "#FF8A00",
-          }}
-        >
-          Browse Library
-        </Button>
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => navigate('/user/library')}
+            style={{
+              backgroundColor: '#FF8A00',
+              borderColor: '#FF8A00',
+              borderRadius: '12px',
+              fontWeight: 500,
+              height: '48px',
+              padding: '0 24px',
+              fontSize: '16px'
+            }}
+          >
+             Browse Library
+          </Button>
+        </Space>
       </div>
 
-      {/* Reservations List */}
-      <Row gutter={[0, 16]}>
-        {mockBookings.map((booking: any) => {
-          return (
-            <Col span={24} key={booking.id}>
-              <Card
-                style={{
-                  borderRadius: "12px",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-                  border: "1px solid #f0f0f0",
-                  overflow: "hidden",
-                }}
-                bodyStyle={{ padding: 0 }}
-              >
-                <div style={{ display: "flex" }}>
-                  {/* Book Cover */}
-                  <div
-                    style={{
-                      width: "160px",
-                      height: "220px",
-                      flexShrink: 0,
-                      background: "linear-gradient(135deg, #FF8A00)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "white",
-                    }}
-                  >
-                    <BookOutlined style={{ fontSize: "48px", opacity: 0.8 }} />
+      {/* Reservation Cards */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 0' }}>
+          <Text>กำลังโหลดข้อมูล...</Text>
+        </div>
+      ) : reservationData.length === 0 ? (
+        <Empty
+          description="คุณยังไม่ได้จองหนังสือเล่มใด"
+          style={{ 
+            padding: '60px 0',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            margin: '24px 0'
+          }}
+        />
+      ) : (
+        <Row gutter={[24, 24]}>
+          {reservationData.map((reservation) => {
+            const statusColor = getReservationStatusColor(reservation.reservation_status?.status_name || 'waiting');
+            const statusText = getReservationStatusText(reservation.reservation_status?.status_name || 'waiting');
+            
+            return (
+              <Col xs={24} sm={12} lg={8} xl={6} key={reservation.ID}>
+                <Card
+                  hoverable
+                  style={{
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    border: 'none',
+                    height: '100%'
+                  }}
+                  bodyStyle={{ padding: '0' }}
+                >
+                  {/* Book Cover and Icon */}
+                  <div style={{
+                    backgroundColor: '#FF8A00',
+                    padding: '32px',
+                    borderRadius: '12px 12px 0 0',
+                    textAlign: 'center',
+                    position: 'relative'
+                  }}>
+                    <BookOutlined 
+                      style={{ 
+                        fontSize: '48px', 
+                        color: 'white',
+                        marginBottom: '8px'
+                      }} 
+                    />
+                    <Tag 
+                      color={statusColor}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        borderRadius: '6px',
+                        fontWeight: 500
+                      }}
+                    >
+                      {statusText}
+                    </Tag>
                   </div>
 
-                  {/* Book Information */}
-                  <div
-                    style={{
-                      flex: 1,
-                      padding: "20px 24px",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    {/* Header with status */}
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        <div style={{ flex: 1 }}>
-                          <Title
-                            level={4}
-                            style={{
-                              margin: "0 0 4px 0",
-                              color: "#1f1f1f",
-                              fontSize: "20px",
-                              fontWeight: 500,
-                              lineHeight: "1.3",
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            {booking.bookTitle}
-                          </Title>
-                          <Text
-                            style={{
-                              color: "#666",
-                              fontSize: "15px",
-                              fontWeight: 300,
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            by {booking.author}
-                          </Text>
-                        </div>
-                      </div>
+                  {/* Book Details */}
+                  <div style={{ padding: '20px' }}>
+                    <Title level={4} style={{ 
+                      margin: '0 0 8px 0', 
+                      color: '#011F4B',
+                      fontSize: '18px',
+                      lineHeight: '1.4'
+                    }}>
+                      {reservation.book?.title || 'ไม่มีข้อมูลหนังสือ'}
+                    </Title>
+                    
+                    <Text style={{ 
+                      color: '#6B7280', 
+                      fontSize: '14px',
+                      display: 'block',
+                      marginBottom: '16px'
+                    }}>
+                      by {reservation.book?.authors?.map((author: any) => author.author_name).join(', ') || 'Unknown Author'}
+                    </Text>
 
-                      {/* Queue Information */}
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "32px",
-                          marginBottom: "20px",
-                          padding: "16px",
-                          background: "#f9f9f9",
-                          borderRadius: "10px",
-                          border: "1px solid #f0f0f0",
-                        }}
-                      >
-                        <div>
-                          <Text
-                            style={{
-                              fontSize: "12px",
-                              color: "#999",
-                              textTransform: "uppercase",
-                              fontWeight: 500,
-                              letterSpacing: "0.5px",
-                              display: "block",
-                              marginBottom: "4px",
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            Reservation Date
+                    {/* Date Information */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text strong style={{ color: '#8C8C8C', fontSize: '12px' }}>
+                            RESERVATION DATE
                           </Text>
-                          <Text
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: 400,
-                              color: "#666",
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            {formatDate(booking.reservationDate)}
+                          <Text strong style={{ color: '#8C8C8C', fontSize: '12px' }}>
+                            QUEUE POSITION
                           </Text>
                         </div>
-                        <div>
-                          <Text
-                            style={{
-                              fontSize: "12px",
-                              color: "#999",
-                              textTransform: "uppercase",
-                              fontWeight: 500,
-                              letterSpacing: "0.5px",
-                              display: "block",
-                              marginBottom: "4px",
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            Queue Position
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: '#011F4B', fontSize: '14px', fontWeight: 500 }}>
+                            {formatDate(reservation.reservation_date)}
                           </Text>
-                          <Text
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: 400,
-                              color: "#666",
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            {booking.yourQueue + 1} of {booking.queue}
+                          <Text style={{ color: '#011F4B', fontSize: '14px', fontWeight: 500 }}>
+                            1 of 5
                           </Text>
                         </div>
-                        <div>
-                          <Text
-                            style={{
-                              fontSize: "12px",
-                              color: "#999",
-                              textTransform: "uppercase",
-                              fontWeight: 500,
-                              letterSpacing: "0.5px",
-                              display: "block",
-                              marginBottom: "4px",
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            Status
-                          </Text>
-                          <Tag
-                            color="success"
-                            style={{
-                              borderRadius: "16px",
-                              padding: "4px 8px",
-                              border: "none",
-                              fontSize: "14px",
-                              fontWeight: 400,
-                              color: "#52c41a",
-                              fontFamily: "Kanit, sans-serif",
-                            }}
-                          >
-                            {booking.status === "ready" ||
-                            booking.yourQueue === 0
-                              ? "Ready to Borrow"
-                              : "In Queue"}
-                          </Tag>
-                        </div>
-                      </div>
+                        
+                        {reservation.notified_at && (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                              <Text strong style={{ color: '#8C8C8C', fontSize: '12px' }}>
+                                NOTIFIED AT
+                              </Text>
+                              <Text strong style={{ color: '#8C8C8C', fontSize: '12px' }}>
+                                STATUS
+                              </Text>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Text style={{ color: '#011F4B', fontSize: '14px', fontWeight: 500 }}>
+                                {formatDate(reservation.notified_at)}
+                              </Text>
+                              <Text style={{ 
+                                color: statusColor === 'green' ? '#52C41A' : statusColor === 'orange' ? '#FA8C16' : '#F5222D', 
+                                fontSize: '14px', 
+                                fontWeight: 500 
+                              }}>
+                                {statusText}
+                              </Text>
+                            </div>
+                          </>
+                        )}
+                      </Space>
                     </div>
 
                     {/* Action Button */}
-                    <div
-                      style={{ display: "flex", justifyContent: "flex-start" }}
-                    >
-                      <Button
-                        type="primary"
-                        onClick={() => handleAction(booking)}
-                        style={{
-                          height: "40px",
-                          padding: "0 20px",
-                          borderRadius: "20px",
-                          fontWeight: 400,
-                          background: "#FF8A00",
-                          borderColor: "#FF8A00",
-                          fontFamily: "Kanit, sans-serif",
-                        }}
+                    {reservation.reservation_status?.status_name !== 'cancelled' && 
+                     reservation.reservation_status?.status_name !== 'fulfilled' && (
+                      <Popconfirm
+                        title="ยกเลิกการจอง"
+                        description="คุณแน่ใจหรือไม่ที่จะยกเลิกการจองหนังสือเล่มนี้?"
+                        onConfirm={() => handleCancelReservation(reservation)}
+                        okText="ยกเลิก"
+                        cancelText="ไม่"
+                        okButtonProps={{ danger: true }}
                       >
-                        {booking.status === "ready" || booking.yourQueue === 0
-                          ? "Borrow Now"
-                          : "Cancel Reservation"}
-                      </Button>
-                    </div>
+                        <Button
+                          danger
+                          block
+                          style={{
+                            borderRadius: '8px',
+                            height: '40px',
+                            fontWeight: 500
+                          }}
+                          icon={<DeleteOutlined />}
+                        >
+                          Cancel Reservation
+                        </Button>
+                      </Popconfirm>
+                    )}
+
+                    {reservation.reservation_status?.status_name === 'notified' && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '12px',
+                        backgroundColor: '#FFF7E6',
+                        borderRadius: '8px',
+                        border: '1px solid #FFD591'
+                      }}>
+                        <Text style={{ color: '#D48806', fontSize: '12px' }}>
+                           Ready to Borrow! Please visit the library to pick up your book.
+                        </Text>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </Card>
-            </Col>
-          );
-        })}
-      </Row>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+      )}
     </div>
   );
 }

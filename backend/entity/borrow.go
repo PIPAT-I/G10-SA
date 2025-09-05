@@ -16,9 +16,10 @@ type Borrow struct {
     // Borrow now ties to a specific license (copy) of a book
     BookLicenseID uint         `gorm:"not null" json:"book_license_id"`
     BookLicense   *BookLicense `gorm:"foreignKey:BookLicenseID;references:ID" json:"book_license"`
-
     // Relationships
-    ReadingActivities []ReadingActivity `gorm:"foreignKey:BorrowID" json:"reading_activities"`
+    BorrowPolicyID   uint             `gorm:"not null" json:"borrow_policy_id"`
+    BorrowPolicy     *BorrowPolicy    `gorm:"foreignKey:BorrowPolicyID" json:"borrow_policy"`
+
     
-    Notifications     []Notification    `gorm:"foreignKey:BorrowID" json:"notifications"`
+    ReadingActivities []ReadingActivity `gorm:"foreignKey:BorrowID" json:"reading_activities"`
 }

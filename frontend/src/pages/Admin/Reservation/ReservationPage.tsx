@@ -1,72 +1,24 @@
 import { useState, useEffect } from "react";
-import { Card, Typography, Table, Tag, Space, Button, message, Modal, Descriptions } from "antd";
-import { EyeOutlined, ClockCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { Card, Typography, Table, Tag, Space, Button, message, Modal, Descriptions, Popconfirm } from "antd";
+import { EyeOutlined, ClockCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, UndoOutlined } from "@ant-design/icons";
+import { 
+  getAllReservations, 
+  fulfillReservation, 
+  cancelReservation, 
+  getReservationStatusColor, 
+  getReservationStatusText,
+  getTimeUntilExpiry,
+  isNearExpiry
+} from "../../../services/https/reservation";
+import type { Reservation } from "../../../interfaces/Reservation";
 
 const { Title } = Typography;
 
-// 📋 Interface สำหรับข้อมูลการจอง
-interface ReservationData {
-  id: number;
-  reservationDate: string;
-  userId: string;
-  user: {
-    firstname: string;
-    lastname: string;
-    email: string;
-  };
-  book: {
-    title: string;
-    isbn: string;
-  };
-  reservationStatus: {
-    status: string;
-  };
-  notifiedAt?: string;
-  expiresAt?: string;
-  allocatedBookLicense?: {
-    licenseNumber: string;
-  };
-}
-
 export default function ReservationAdminPage() {
-  const [reservationData, setReservationData] = useState<ReservationData[]>([]);
+  const [reservationData, setReservationData] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedReservation, setSelectedReservation] = useState<ReservationData | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-
-  // 🎨 สีสำหรับสถานะต่างๆ
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'waiting': return 'orange';
-      case 'notified': return 'blue';
-      case 'fulfilled': return 'green';
-      case 'expired': return 'red';
-      case 'cancelled': return 'gray';
-      default: return 'default';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'waiting': return 'รอการจัดสรร';
-      case 'notified': return 'แจ้งเตือนแล้ว';
-      case 'fulfilled': return 'เสร็จสิ้น';
-      case 'expired': return 'หมดอายุ';
-      case 'cancelled': return 'ยกเลิก';
-      default: return 'ไม่ทราบ';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'waiting': return <ClockCircleOutlined />;
-      case 'notified': return <ExclamationCircleOutlined />;
-      case 'fulfilled': return <CheckCircleOutlined />;
-      case 'expired': return <ExclamationCircleOutlined />;
-      case 'cancelled': return <ExclamationCircleOutlined />;
-      default: return <ClockCircleOutlined />;
-    }
-  };
 
   // 📅 ฟอร์แมตวันที่
   const formatDate = (dateString: string) => {
@@ -79,25 +31,61 @@ export default function ReservationAdminPage() {
     });
   };
 
+  // 🎨 ไอคอนสำหรับสถานะ
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'waiting': return <ClockCircleOutlined />;
+      case 'notified': return <ExclamationCircleOutlined />;
+      case 'fulfilled': return <CheckCircleOutlined />;
+      case 'expired': return <ExclamationCircleOutlined />;
+      case 'cancelled': return <ExclamationCircleOutlined />;
+      default: return <ClockCircleOutlined />;
+    }
+  };
+
+  // ✅ ดำเนินการจอง (Fulfill)
+  const handleFulfillReservation = async (reservation: Reservation) => {
+    try {
+      await fulfillReservation(reservation.ID, reservation.user_id);
+      message.success('ดำเนินการจองเรียบร้อยแล้ว');
+      loadReservationData(); // โหลดข้อมูลใหม่
+    } catch (error) {
+      console.error('Error fulfilling reservation:', error);
+      message.error('ไม่สามารถดำเนินการจองได้');
+    }
+  };
+
+  // ❌ ยกเลิกการจอง
+  const handleCancelReservation = async (reservation: Reservation, reason: string = 'ยกเลิกโดยแอดมิน') => {
+    try {
+      await cancelReservation(reservation.ID, reservation.user_id, reason);
+      message.success('ยกเลิกการจองเรียบร้อยแล้ว');
+      loadReservationData(); // โหลดข้อมูลใหม่
+    } catch (error) {
+      console.error('Error cancelling reservation:', error);
+      message.error('ไม่สามารถยกเลิกการจองได้');
+    }
+  };
+
   // 📋 Column สำหรับตาราง
   const columns = [
     {
       title: 'ลำดับ',
-      dataIndex: 'id',
-      key: 'id',
+      dataIndex: 'ID',
+      key: 'ID',
       width: 80,
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: 'ผู้จอง',
       key: 'user',
-      render: (record: ReservationData) => (
+      render: (record: Reservation) => (
         <div>
           <div style={{ fontWeight: 500 }}>
-            {record.user.firstname} {record.user.lastname}
+            {record.user?.FirstName} {record.user?.LastName}
           </div>
           <div style={{ fontSize: '12px', color: '#6B7280' }}>
-            {record.userId}
+            {record.user_id}
           </div>
         </div>
       ),
@@ -105,66 +93,100 @@ export default function ReservationAdminPage() {
     {
       title: 'หนังสือ',
       key: 'book',
-      render: (record: ReservationData) => (
+      render: (record: Reservation) => (
         <div>
           <div style={{ fontWeight: 500 }}>
-            {record.book.title}
+            {record.book?.title || 'ไม่มีข้อมูล'}
           </div>
           <div style={{ fontSize: '12px', color: '#6B7280' }}>
-            ISBN: {record.book.isbn}
+            ISBN: {record.book?.isbn || 'ไม่มีข้อมูล'}
           </div>
         </div>
       ),
     },
     {
       title: 'วันที่จอง',
-      dataIndex: 'reservationDate',
-      key: 'reservationDate',
+      dataIndex: 'reservation_date',
+      key: 'reservation_date',
       render: (date: string) => formatDate(date),
     },
     {
       title: 'วันที่แจ้งเตือน',
-      dataIndex: 'notifiedAt',
-      key: 'notifiedAt',
+      dataIndex: 'notified_at',
+      key: 'notified_at',
       render: (date?: string) => date ? formatDate(date) : '-',
     },
     {
       title: 'หมดอายุ',
-      dataIndex: 'expiresAt',
-      key: 'expiresAt',
-      render: (date?: string) => date ? formatDate(date) : '-',
+      dataIndex: 'expires_at',
+      key: 'expires_at',
+      render: (date?: string) => {
+        if (!date) return '-';
+        const isNear = isNearExpiry(date);
+        return (
+          <div style={{ color: isNear ? '#ff4d4f' : 'inherit' }}>
+            {formatDate(date)}
+            {isNear && (
+              <div style={{ fontSize: '10px', color: '#ff4d4f' }}>
+                {getTimeUntilExpiry(date)}
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: 'สถานะ',
       key: 'status',
-      render: (record: ReservationData) => (
+      render: (record: Reservation) => (
         <Tag 
-          color={getStatusColor(record.reservationStatus.status)} 
-          icon={getStatusIcon(record.reservationStatus.status)}
+          color={getReservationStatusColor(record.reservation_status?.status_name || '')} 
+          icon={getStatusIcon(record.reservation_status?.status_name || '')}
         >
-          {getStatusText(record.reservationStatus.status)}
+          {getReservationStatusText(record.reservation_status?.status_name || '')}
         </Tag>
       ),
     },
     {
       title: 'การดำเนินการ',
       key: 'action',
-      render: (record: ReservationData) => (
-        <Space>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => showDetail(record)}
-          >
-            ดูรายละเอียด
-          </Button>
-        </Space>
-      ),
+      render: (record: Reservation) => {
+        const status = record.reservation_status?.status_name?.toLowerCase();
+        return (
+          <Space>
+            <Button
+              type="link"
+              icon={<EyeOutlined />}
+              onClick={() => showDetail(record)}
+            >
+              ดูรายละเอียด
+            </Button>
+            {status === 'notified' && (
+              <Button
+                type="link"
+                onClick={() => handleFulfillReservation(record)}
+                style={{ color: '#52c41a' }}
+              >
+                ดำเนินการ
+              </Button>
+            )}
+            {(status === 'waiting' || status === 'notified') && (
+              <Button
+                type="link"
+                onClick={() => handleCancelReservation(record)}
+                danger
+              >
+                ยกเลิก
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
   // 🔍 แสดงรายละเอียด
-  const showDetail = (record: ReservationData) => {
+  const showDetail = (record: Reservation) => {
     setSelectedReservation(record);
     setDetailModalVisible(true);
   };
@@ -173,96 +195,8 @@ export default function ReservationAdminPage() {
   const loadReservationData = async () => {
     setLoading(true);
     try {
-      // TODO: เรียก API จริง
-      // const response = await fetch('/api/admin/reservations', {
-      //   headers: { Authorization: `Bearer ${authen.getToken()}` }
-      // });
-      
-      // Mock Data สำหรับทดสอบ
-      const mockData: ReservationData[] = [
-        {
-          id: 1,
-          reservationDate: '2025-08-20T10:30:00Z',
-          userId: 'S001',
-          user: {
-            firstname: 'สมชาย',
-            lastname: 'ใจดี',
-            email: 'somchai@email.com'
-          },
-          book: {
-            title: 'Harry Potter and the Chamber of Secrets',
-            isbn: '978-0747538493'
-          },
-          reservationStatus: {
-            status: 'Waiting'
-          }
-        },
-        {
-          id: 2,
-          reservationDate: '2025-08-22T14:15:00Z',
-          userId: 'S002',
-          user: {
-            firstname: 'สมใส',
-            lastname: 'รักการอ่าน',
-            email: 'somsai@email.com'
-          },
-          book: {
-            title: 'The Hobbit',
-            isbn: '978-0547928227'
-          },
-          reservationStatus: {
-            status: 'Notified'
-          },
-          notifiedAt: '2025-09-01T09:00:00Z',
-          expiresAt: '2025-09-03T23:59:59Z',
-          allocatedBookLicense: {
-            licenseNumber: 'LIC001'
-          }
-        },
-        {
-          id: 3,
-          reservationDate: '2025-08-18T16:45:00Z',
-          userId: 'S003',
-          user: {
-            firstname: 'สมศักดิ์',
-            lastname: 'หนังสือดี',
-            email: 'somsak@email.com'
-          },
-          book: {
-            title: 'Murder on the Orient Express',
-            isbn: '978-0062693662'
-          },
-          reservationStatus: {
-            status: 'Fulfilled'
-          },
-          notifiedAt: '2025-08-25T10:30:00Z',
-          allocatedBookLicense: {
-            licenseNumber: 'LIC002'
-          }
-        },
-        {
-          id: 4,
-          reservationDate: '2025-08-15T11:20:00Z',
-          userId: 'S004',
-          user: {
-            firstname: 'สมคิด',
-            lastname: 'ชอบอ่าน',
-            email: 'somkit@email.com'
-          },
-          book: {
-            title: 'The Shining',
-            isbn: '978-0307743657'
-          },
-          reservationStatus: {
-            status: 'Expired'
-          },
-          notifiedAt: '2025-08-20T08:00:00Z',
-          expiresAt: '2025-08-22T23:59:59Z'
-        }
-      ];
-      
-      setReservationData(mockData);
-      
+      const data = await getAllReservations();
+      setReservationData(data);
     } catch (error) {
       console.error('Error loading reservation data:', error);
       message.error('ไม่สามารถโหลดข้อมูลการจองได้');
@@ -294,7 +228,7 @@ export default function ReservationAdminPage() {
           columns={columns}
           dataSource={reservationData}
           loading={loading}
-          rowKey="id"
+          rowKey="ID"
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
@@ -319,38 +253,38 @@ export default function ReservationAdminPage() {
         {selectedReservation && (
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="รหัสการจอง">
-              #{selectedReservation.id}
+              #{selectedReservation.ID}
             </Descriptions.Item>
             <Descriptions.Item label="ผู้จอง">
-              {selectedReservation.user.firstname} {selectedReservation.user.lastname} ({selectedReservation.userId})
+              {selectedReservation.user?.FirstName} {selectedReservation.user?.LastName} ({selectedReservation.user_id})
             </Descriptions.Item>
             <Descriptions.Item label="อีเมล">
-              {selectedReservation.user.email}
+              {selectedReservation.user?.Email || 'ไม่มีข้อมูล'}
             </Descriptions.Item>
             <Descriptions.Item label="หนังสือ">
-              {selectedReservation.book.title}
+              {selectedReservation.book?.title || 'ไม่มีข้อมูล'}
             </Descriptions.Item>
             <Descriptions.Item label="ISBN">
-              {selectedReservation.book.isbn}
+              {selectedReservation.book?.isbn || 'ไม่มีข้อมูล'}
             </Descriptions.Item>
             <Descriptions.Item label="วันที่จอง">
-              {formatDate(selectedReservation.reservationDate)}
+              {formatDate(selectedReservation.reservation_date)}
             </Descriptions.Item>
             <Descriptions.Item label="วันที่แจ้งเตือน">
-              {selectedReservation.notifiedAt ? formatDate(selectedReservation.notifiedAt) : 'ยังไม่แจ้งเตือน'}
+              {selectedReservation.notified_at ? formatDate(selectedReservation.notified_at) : 'ยังไม่แจ้งเตือน'}
             </Descriptions.Item>
             <Descriptions.Item label="วันหมดอายุ">
-              {selectedReservation.expiresAt ? formatDate(selectedReservation.expiresAt) : 'ไม่มีกำหนด'}
+              {selectedReservation.expires_at ? formatDate(selectedReservation.expires_at) : 'ไม่มีกำหนด'}
             </Descriptions.Item>
             <Descriptions.Item label="License ที่จัดสรร">
-              {selectedReservation.allocatedBookLicense ? selectedReservation.allocatedBookLicense.licenseNumber : 'ยังไม่จัดสรร'}
+              {selectedReservation.allocated_book_license?.book_license_id || 'ยังไม่จัดสรร'}
             </Descriptions.Item>
             <Descriptions.Item label="สถานะ">
               <Tag 
-                color={getStatusColor(selectedReservation.reservationStatus.status)}
-                icon={getStatusIcon(selectedReservation.reservationStatus.status)}
+                color={getReservationStatusColor(selectedReservation.reservation_status?.status_name || '')}
+                icon={getStatusIcon(selectedReservation.reservation_status?.status_name || '')}
               >
-                {getStatusText(selectedReservation.reservationStatus.status)}
+                {getReservationStatusText(selectedReservation.reservation_status?.status_name || '')}
               </Tag>
             </Descriptions.Item>
           </Descriptions>

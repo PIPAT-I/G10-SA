@@ -6,15 +6,14 @@ import (
 )
 
 type User struct {
-	UserID      string `gorm:"not null" json:"user_id"`
+	UserID      string `gorm:"not null;primaryKey" json:"user_id"`
 	Password    string `gorm:"not null" json:"-"`
 	Firstname   string `gorm:"not null" json:"firstname"`
 	Lastname    string `gorm:"not null" json:"lastname"`
 	Email       string `gorm:"unique;not null" json:"email"`
 	PhoneNumber string `gorm:"not null" json:"phone_number"`
 
-	BorrowingLimitID uint            `gorm:"not null" json:"borrowing_limit_id"`
-	BorrowingLimit   *BorrowingLimit `gorm:"foreignKey:BorrowingLimitID" json:"borrowing_limit"`
+	
 	RoleID          uint            `gorm:"not null" json:"role_id"`
 	Role			*Role            `gorm:"foreignKey:RoleID" json:"role"`
 	Profile		*Profile         `gorm:"foreignKey:UserID;references:UserID" json:"profile"`
